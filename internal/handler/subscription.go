@@ -138,8 +138,13 @@ func (h *SubscriptionHandler) ExecuteSubscription(c *gin.Context) {
 func (h *SubscriptionHandler) GetSubscriptions(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	
+	// 获取搜索参数
+	subKey := c.Query("sub_key")
+	title := c.Query("title")
+	status := c.Query("status")
 
-	subscriptions, total, err := h.service.GetSubscriptions(c.Request.Context(), limit, offset)
+	subscriptions, total, err := h.service.GetSubscriptions(c.Request.Context(), limit, offset, subKey, title, status)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, APIResponse{
 			Code:      "INTERNAL_ERROR",

@@ -65,15 +65,28 @@ func (r *SubscriptionRepository) GetActiveByKey(ctx context.Context, subType, ke
 	return &subscription, nil
 }
 
-func (r *SubscriptionRepository) List(ctx context.Context, limit, offset int) ([]*models.Subscription, int64, error) {
+func (r *SubscriptionRepository) List(ctx context.Context, limit, offset int, subKey, title, status string) ([]*models.Subscription, int64, error) {
 	var subscriptions []*models.Subscription
 	var total int64
 
-	if err := r.db.WithContext(ctx).Model(&models.Subscription{}).Count(&total).Error; err != nil {
+	query := r.db.WithContext(ctx).Model(&models.Subscription{})
+
+	// 添加搜索条件
+	if subKey != "" {
+		query = query.Where("sub_key LIKE ?", "%"+subKey+"%")
+	}
+	if title != "" {
+		query = query.Where("title LIKE ?", "%"+title+"%")
+	}
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err := r.db.WithContext(ctx).
+	err := query.
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

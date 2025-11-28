@@ -268,7 +268,7 @@ func (s *SubscriptionService) GetStats(ctx context.Context, req *models.StatsQue
 	return s.statsRepo.GetStats(ctx, startTime, endTime, limit, offset)
 }
 
-func (s *SubscriptionService) GetSubscriptions(ctx context.Context, limit, offset int) ([]*models.Subscription, int64, error) {
+func (s *SubscriptionService) GetSubscriptions(ctx context.Context, limit, offset int, subKey, title, status string) ([]*models.Subscription, int64, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
@@ -276,7 +276,7 @@ func (s *SubscriptionService) GetSubscriptions(ctx context.Context, limit, offse
 		offset = 0
 	}
 
-	return s.repo.List(ctx, limit, offset)
+	return s.repo.List(ctx, limit, offset, subKey, title, status)
 }
 
 func (s *SubscriptionService) GetSubscription(ctx context.Context, subType, key string, version *uint8) (*models.Subscription, error) {
