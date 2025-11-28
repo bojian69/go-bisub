@@ -17,6 +17,12 @@ GO BI Subscription 订阅BI数据服务
 
 ## 快速开始
 
+### 环境要求
+- Go 1.21+
+- Docker & Docker Compose
+- MySQL 8.0+
+- Redis 6.0+
+
 ### 使用Docker Compose（推荐）
 
 ```bash
@@ -25,23 +31,90 @@ git clone <repository-url>
 cd go-bisub
 
 # 启动所有服务
+make docker-compose-up
+# 或者
 docker-compose up -d
 
 # 查看日志
+make docker-compose-logs
+# 或者
 docker-compose logs -f go-bisub
 ```
 
 ### 本地开发
 
-```bash
-# 安装依赖
-go mod tidy
+#### 方式 1: 使用本地 MySQL 和 Redis（推荐）
 
-# 启动MySQL和Redis
+```bash
+# 1. 检查开发环境
+make check-env
+
+# 2. 安装开发工具和依赖
+make install-tools
+make deps
+
+# 3. 复制并配置
+cp config.local.yaml config.yaml
+# 编辑 config.yaml，修改数据库密码等配置
+
+# 4. 检查数据库连接
+make db-check
+
+# 5. 初始化数据库
+make db-init
+
+# 6. 启动开发服务器
+make dev                # 热重载（推荐）
+# 或
+bash scripts/dev.sh     # 使用脚本（自动检查依赖）
+```
+
+#### 方式 2: 使用 Docker
+
+```bash
+# 1-2 步骤同上
+
+# 3. 启动 Docker 服务
 docker-compose up -d mysql redis
 
-# 运行应用
-go run cmd/server/main.go
+# 4. 初始化数据库
+mysql -h 127.0.0.1 -u root -ppassword < init.sql
+
+# 5. 启动开发服务器
+make dev
+```
+
+**其他启动方式：**
+```bash
+make start              # 快速启动（无热重载）
+go run cmd/server/main.go  # 直接运行
+```
+
+**注意事项：**
+- 如果 `make dev` 提示找不到 `air`，请先运行 `make install-tools`
+- 开发工具会安装到 `$GOPATH/bin`，确保该目录在 PATH 中
+- 或者将 `$(go env GOPATH)/bin` 添加到 PATH：
+  ```bash
+  export PATH="$PATH:$(go env GOPATH)/bin"
+  ```
+
+### 常用开发命令
+
+```bash
+# 查看所有可用命令
+make help
+
+# 代码格式化和检查
+make check
+
+# 运行测试
+make test
+
+# 构建应用
+make build
+
+# 查看应用健康状态
+make health
 ```
 
 ## API文档
@@ -168,7 +241,7 @@ database:
   primary:                # 主数据库（存储订阅信息）
     host: localhost
     port: 3306
-    database: go_bisub
+    database: go_sub
     username: root
     password: password
   
@@ -276,66 +349,136 @@ docker run -d \
 ```
 go-bisub/
 ├── cmd/server/          # 主程序入口
-├── internal/
+├── internal/            # 私有应用代码
 │   ├── config/         # 配置管理
-│   ├── models/         # 数据模型
+│   ├── models/         # 数据模型（支持分布式ID）
 │   ├── repository/     # 数据访问层
 │   ├── service/        # 业务逻辑层
 │   ├── handler/        # HTTP处理器
-│   └── middleware/     # 中间件
-├── web/                # Web界面资源
+│   ├── middleware/     # 中间件（认证、限流、日志）
+│   └── utils/          # 工具函数（分布式ID生成）
+├── web/                # Web管理界面
+│   ├── static/         # 静态资源
+│   └── templates/      # HTML模板
+├── docs/               # 项目文档
 ├── config.yaml         # 配置文件
 ├── docker-compose.yml  # Docker Compose配置
 ├── Dockerfile          # Docker镜像构建
+├── Makefile           # 开发命令集合
+├── .golangci.yml      # 代码质量检查配置
+├── .air.toml          # 热重载配置
 └── init.sql           # 数据库初始化脚本
 ```
 
 ### 添加新功能
 
-1. 在 `internal/models/` 中定义数据模型
-2. 在 `internal/repository/` 中实现数据访问
-3. 在 `internal/service/` 中实现业务逻辑
-4. 在 `internal/handler/` 中实现HTTP接口
-5. 在 `cmd/server/main.go` 中注册路由
+1. **定义数据模型** (`internal/models/`)
+   ```bash
+   # 使用分布式ID的基础模型
+   type NewModel struct {
+       BaseModel  # 自动包含分布式ID
+       // 其他字段
+   }
+   ```
 
-### 代码格式化和审查
+2. **实现数据访问** (`internal/repository/`)
+   ```bash
+   # 实现Repository接口
+   type NewRepository interface {
+       Create(ctx context.Context, model *NewModel) error
+       // 其他方法
+   }
+   ```
 
-#### 基础命令
+3. **实现业务逻辑** (`internal/service/`)
+   ```bash
+   # 实现Service接口
+   type NewService interface {
+       CreateNew(ctx context.Context, req *CreateRequest) (*Response, error)
+       // 其他方法
+   }
+   ```
+
+4. **实现HTTP接口** (`internal/handler/`)
+   ```bash
+   # 实现HTTP处理器
+   func (h *NewHandler) Create(c *gin.Context) {
+       // HTTP处理逻辑
+   }
+   ```
+
+5. **注册路由** (`cmd/server/main.go`)
+   ```bash
+   # 注册API路由
+   v1.POST("/new", handler.Create)
+   ```
+
+### 开发工具和命令
+
+#### 项目初始化
 ```bash
-# 格式化代码
-go fmt ./...
+# 安装所有开发工具
+make install-tools
 
-# 清理依赖
-go mod tidy
-
-# 检查代码问题
-go vet ./...
-
-# 编译检查
-go build ./...
+# 初始化项目环境（包含依赖下载和工具安装）
+make init
 ```
 
-#### 高级工具
+#### 代码质量检查
 ```bash
-# 安装goimports（自动管理导入包）
-go install golang.org/x/tools/cmd/goimports@latest
+# 运行完整的代码检查流程
+make check
 
-# 使用goimports格式化代码
-goimports -w .
-
-# 安装golangci-lint（综合代码检查）
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
-# 运行代码检查
-golangci-lint run
+# 单独运行各项检查
+make fmt      # 代码格式化
+make vet      # 静态分析
+make lint     # 代码质量检查
 ```
 
-#### 命令说明
-- **go fmt**: 格式化Go代码，统一代码风格
-- **go mod tidy**: 清理未使用的依赖，添加缺失的依赖
-- **go vet**: 检查代码中的常见错误和问题
-- **goimports**: 自动管理import语句，移除未使用的导入
-- **golangci-lint**: 运行多种代码检查工具，发现潜在问题
+#### 测试相关
+```bash
+# 运行所有测试
+make test
+
+# 运行测试（带竞争检测）
+make test-race
+
+# 生成测试覆盖率报告
+make test-coverage
+
+# 运行基准测试
+make benchmark
+```
+
+#### 构建和部署
+```bash
+# 构建当前平台版本
+make build
+
+# 构建所有平台版本
+make build-all
+
+# 构建Docker镜像
+make docker-build
+```
+
+#### 开发调试
+```bash
+# 启动热重载开发服务器
+make dev
+
+# 查看应用日志
+make logs
+
+# 检查应用健康状态
+make health
+
+# CPU性能分析
+make profile-cpu
+
+# 内存性能分析
+make profile-mem
+```
 
 ## 监控和日志
 
@@ -352,20 +495,31 @@ golangci-lint run
 # 运行完整的代码检查流程
 make check
 
-# 或者手动执行
-go fmt ./...
-go mod tidy
-go vet ./...
-go build ./...
+# 运行测试确保功能正常
+make test
 ```
 
-### 提交前检查
+### 提交前检查清单
 ```bash
-# 确保代码质量
-goimports -w .
-golangci-lint run
-go test ./...
+# 1. 代码格式化和质量检查
+make check
+
+# 2. 运行所有测试
+make test
+
+# 3. 确保构建成功
+make build
+
+# 4. 安全检查（可选）
+make security
 ```
+
+### 持续集成
+项目配置了完整的代码质量检查工具：
+- **golangci-lint**: 30+种代码检查规则
+- **测试覆盖率**: 自动生成覆盖率报告
+- **安全扫描**: gosec安全漏洞检测
+- **性能分析**: 内置pprof性能分析
 
 ## 安全考虑
 
@@ -375,6 +529,40 @@ go test ./...
 - 输入验证：所有输入参数验证
 - 操作审计：完整的操作日志记录和追踪
 - 数据安全：敏感数据脱敏和加密存储
+
+## 技术特性
+
+### 分布式ID生成
+- **Snowflake算法**: 高性能分布式ID生成
+- **并发安全**: 支持高并发场景下的ID唯一性
+- **时间排序**: ID包含时间戳信息，天然排序
+- **故障降级**: 自动降级到UUID v7
+
+### 性能优化
+- **连接池**: 数据库连接池优化
+- **Redis缓存**: 分布式缓存支持
+- **批量操作**: 支持批量数据处理
+- **异步统计**: 不阻塞主流程的统计收集
+
+### 安全特性
+- **JWT认证**: 标准JWT Token认证
+- **SQL注入防护**: 参数化查询和SQL验证
+- **限流保护**: Redis分布式限流
+- **操作审计**: 完整的操作日志记录
+
+### 监控运维
+- **健康检查**: `/health` 端点
+- **指标收集**: Prometheus格式指标
+- **结构化日志**: JSON格式日志输出
+- **性能分析**: 内置pprof支持
+
+## 文档
+
+- [更新日志](docs/CHANGELOG.md)
+- [操作日志实现](docs/OPERATION_LOGS_IMPLEMENTATION.md)
+- [分布式ID规范](docs/distributed-id.md)
+- [代码规范](docs/code-standards.md)
+- [开发工作流程](docs/development-workflow.md)
 
 ## 许可证
 

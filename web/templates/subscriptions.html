@@ -1,57 +1,115 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            font-size: 0.85em;
+        }
+
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+
+        .code-editor {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/admin">BI订阅管理</a>
             <div class="navbar-nav">
                 <a class="nav-link active" href="/admin/subscriptions">订阅管理</a>
                 <a class="nav-link" href="/admin/stats">统计报表</a>
-                <a class="nav-link" href="/admin/operation-logs">操作日志</a>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <div class="container-fluid mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>订阅管理</h2>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg"
+                    viewBox="0 0 16 16">
+                    <path
+                        d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z" />
+                </svg>
                 创建订阅
             </button>
         </div>
 
+        <!-- 搜索和筛选 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="searchKey" placeholder="搜索订阅Key">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="filterStatus">
+                            <option value="">全部状态</option>
+                            <option value="A">待生效</option>
+                            <option value="B">生效中</option>
+                            <option value="C">强制兼容</option>
+                            <option value="D">已失效</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary" onclick="loadSubscriptions()">搜索</button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 订阅列表 -->
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped" id="subscriptionsTable">
-                        <thead>
+                    <table class="table table-hover">
+                        <thead class="table-light">
                             <tr>
                                 <th>订阅Key</th>
                                 <th>版本</th>
                                 <th>标题</th>
+                                <th>类型</th>
                                 <th>状态</th>
+                                <th>创建人</th>
                                 <th>创建时间</th>
-                                <th>操作</th>
+                                <th style="width: 200px;">操作</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- 数据通过JavaScript加载 -->
+                        <tbody id="subscriptionsTable">
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
+
+                <!-- 分页 -->
+                <nav>
+                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                </nav>
             </div>
         </div>
     </div>
 
     <!-- 创建订阅模态框 -->
     <div class="modal fade" id="createModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">创建订阅</h5>
@@ -59,38 +117,74 @@
                 </div>
                 <div class="modal-body">
                     <form id="createForm">
-                        <div class="mb-3">
-                            <label class="form-label">订阅Key</label>
-                            <input type="text" class="form-control" name="subscription_key" required>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">订阅Key <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="sub_key" required>
+                                    <div class="form-text">唯一标识符，建议使用下划线命名</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">版本号 <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="version" min="1" value="1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="type" required>
+                                        <option value="A" selected>分析数据</option>
+                                        <option value="B">业务数据</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">版本号</label>
-                            <input type="number" class="form-control" name="version" min="1" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">标题</label>
+                            <label class="form-label">标题 <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="title" required>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">描述</label>
-                            <textarea class="form-control" name="description" rows="2"></textarea>
+                            <textarea class="form-control" name="abstract" rows="2"></textarea>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">SQL内容</label>
-                            <textarea class="form-control" name="sql_content" rows="5" required></textarea>
+                            <label class="form-label">SQL内容 <span class="text-danger">*</span></label>
+                            <textarea class="form-control code-editor" name="sql_content" rows="8" required
+                                placeholder="SELECT * FROM table WHERE id = {{id}}"></textarea>
+                            <div class="form-text">使用 {{variable_name}} 作为变量占位符</div>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">SQL变量 (JSON格式)</label>
-                            <textarea class="form-control" name="sql_variables" rows="3" placeholder='{"variable_replace": "变量描述"}'></textarea>
+                            <label class="form-label">SQL变量说明 (JSON格式)</label>
+                            <textarea class="form-control code-editor" name="sql_replace" rows="4"
+                                placeholder='{"id": "用户ID", "date": "查询日期"}'></textarea>
+                            <div class="form-text">定义SQL中使用的变量及其说明</div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">状态</label>
-                            <select class="form-select" name="status" required>
-                                <option value="A">待生效</option>
-                                <option value="B" selected>生效中</option>
-                                <option value="C">强制兼容</option>
-                                <option value="D">已失效</option>
-                            </select>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">数据源</label>
+                                    <input type="text" class="form-control" name="db_source" placeholder="default">
+                                    <div class="form-text">留空使用默认数据源</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">状态 <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="status" required>
+                                        <option value="A">待生效</option>
+                                        <option value="B" selected>生效中</option>
+                                        <option value="C">强制兼容低版本</option>
+                                        <option value="D">已失效</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -102,30 +196,66 @@
         </div>
     </div>
 
+    <!-- 执行订阅模态框 -->
+    <div class="modal fade" id="executeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">执行订阅</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">订阅信息</label>
+                        <div id="executeInfo" class="alert alert-info"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">执行参数 (JSON格式)</label>
+                        <textarea class="form-control code-editor" id="executeVariables" rows="6"
+                            placeholder='{"id": 123, "date": "2024-01-01"}'>{}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">超时时间 (毫秒)</label>
+                        <input type="number" class="form-control" id="executeTimeout" value="30000">
+                    </div>
+                    <div id="executeResult" class="mt-3" style="display:none;">
+                        <label class="form-label">执行结果</label>
+                        <pre class="bg-light p-3 rounded" id="executeResultContent"></pre>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="doExecute()">执行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_BASE = '/v1';
-        const AUTH_TOKEN = 'Bearer your-jwt-token'; // 实际应该从登录获取
+        let currentPage = 1;
+        let currentLimit = 20;
+        let executeContext = {};
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            loadSubscriptions();
+        });
 
         // 加载订阅列表
-        async function loadSubscriptions() {
+        async function loadSubscriptions(page = 1) {
+            currentPage = page;
+            const offset = (page - 1) * currentLimit;
+
             try {
-                const response = await fetch(`${API_BASE}/subscriptions`, {
-                    headers: {
-                        'Authorization': AUTH_TOKEN,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
+                const response = await fetch(`${API_BASE}/subscriptions?limit=${currentLimit}&offset=${offset}`);
                 const result = await response.json();
+
                 if (result.code === 'OK') {
-                    renderSubscriptions(result.data.items);
+                    renderSubscriptions(result.data.items || []);
+                    renderPagination(result.data.pagination);
                 } else {
-                    console.error('API Error:', result.message);
                     showError('获取订阅列表失败: ' + result.message);
                 }
             } catch (error) {
@@ -136,79 +266,113 @@
 
         // 渲染订阅列表
         function renderSubscriptions(subscriptions) {
-            const tbody = document.querySelector('#subscriptionsTable tbody');
-            tbody.innerHTML = '';
-            
-            subscriptions.forEach(sub => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${sub.sub_key}</td>
-                    <td>${sub.version}</td>
-                    <td>${sub.title}</td>
+            const tbody = document.getElementById('subscriptionsTable');
+
+            if (subscriptions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = subscriptions.map(sub => `
+                <tr>
+                    <td><code>${sub.sub_key}</code></td>
+                    <td><span class="badge bg-secondary">v${sub.version}</span></td>
+                    <td>${sub.title || '-'}</td>
+                    <td>${getTypeText(sub.type)}</td>
                     <td><span class="badge ${getStatusBadgeClass(sub.status)}">${getStatusText(sub.status)}</span></td>
+                    <td>${sub.creator_id || '-'}</td>
                     <td>${formatDateTime(sub.created_at)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editSubscription('${sub.sub_key}', ${sub.version})">
-                            编辑
+                    <td class="action-buttons">
+                        <button class="btn btn-sm btn-outline-success" onclick='showExecuteModal(${JSON.stringify(sub)})' title="执行">
+                            ▶
                         </button>
-                        <button class="btn btn-sm btn-outline-success" onclick="executeSubscription('${sub.sub_key}', ${sub.version})">
-                            执行
+                        <button class="btn btn-sm btn-outline-primary" onclick='viewDetails(${JSON.stringify(sub)})' title="查看">
+                            👁
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubscription('${sub.sub_key}', ${sub.version})">
-                            删除
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubscription('${sub.sub_key}', ${sub.version}, '${sub.type}')" title="删除">
+                            🗑
                         </button>
                     </td>
-                `;
-                tbody.appendChild(row);
-            });
+                </tr>
+            `).join('');
+        }
+
+        // 渲染分页
+        function renderPagination(pagination) {
+            if (!pagination) return;
+
+            const paginationEl = document.getElementById('pagination');
+            const { current_page, total_pages } = pagination;
+
+            let html = '';
+
+            // 上一页
+            if (current_page > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="loadSubscriptions(${current_page - 1}); return false;">上一页</a></li>`;
+            }
+
+            // 页码
+            for (let i = 1; i <= total_pages; i++) {
+                if (i === 1 || i === total_pages || (i >= current_page - 2 && i <= current_page + 2)) {
+                    const active = i === current_page ? 'active' : '';
+                    html += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadSubscriptions(${i}); return false;">${i}</a></li>`;
+                } else if (i === current_page - 3 || i === current_page + 3) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // 下一页
+            if (current_page < total_pages) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="loadSubscriptions(${current_page + 1}); return false;">下一页</a></li>`;
+            }
+
+            paginationEl.innerHTML = html;
         }
 
         // 创建订阅
         async function createSubscription() {
             const form = document.getElementById('createForm');
             const formData = new FormData(form);
-            
+
             // 构建请求数据
             const data = {
-                type: 'A',
-                sub_key: formData.get('subscription_key'),
+                type: formData.get('type'),
+                sub_key: formData.get('sub_key'),
                 version: parseInt(formData.get('version')),
                 title: formData.get('title'),
-                abstract: formData.get('description') || '',
+                abstract: formData.get('abstract') || '',
                 status: formData.get('status'),
                 extra_config: {
                     sql_content: formData.get('sql_content'),
                     sql_replace: {},
+                    db_source: formData.get('db_source') || 'default',
                     example: '{}'
                 }
             };
-            
+
             // 处理SQL变量
-            if (formData.get('sql_variables')) {
+            if (formData.get('sql_replace')) {
                 try {
-                    data.extra_config.sql_replace = JSON.parse(formData.get('sql_variables'));
+                    data.extra_config.sql_replace = JSON.parse(formData.get('sql_replace'));
                 } catch (e) {
                     showError('SQL变量格式错误，请输入有效的JSON');
                     return;
                 }
             }
-            
+
             try {
                 const response = await fetch(`${API_BASE}/subscriptions`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': AUTH_TOKEN,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
                 if (result.code === 'OK') {
                     showSuccess('订阅创建成功！');
                     bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
                     form.reset();
-                    loadSubscriptions();
+                    loadSubscriptions(currentPage);
                 } else {
                     showError('创建失败: ' + result.message);
                 }
@@ -218,31 +382,51 @@
             }
         }
 
+        // 显示执行模态框
+        function showExecuteModal(sub) {
+            executeContext = sub;
+            document.getElementById('executeInfo').innerHTML = `
+                <strong>订阅Key:</strong> ${sub.sub_key}<br>
+                <strong>版本:</strong> v${sub.version}<br>
+                <strong>标题:</strong> ${sub.title}
+            `;
+            document.getElementById('executeVariables').value = '{}';
+            document.getElementById('executeResult').style.display = 'none';
+            new bootstrap.Modal(document.getElementById('executeModal')).show();
+        }
+
         // 执行订阅
-        async function executeSubscription(subKey, version) {
-            const variables = prompt('请输入执行参数 (JSON格式):', '{}');
-            if (variables === null) return;
-            
+        async function doExecute() {
+            const variables = document.getElementById('executeVariables').value;
+            const timeout = parseInt(document.getElementById('executeTimeout').value);
+
+            let params;
             try {
-                const params = JSON.parse(variables);
-                const response = await fetch(`${API_BASE}/subscriptions/${subKey}/versions/${version}/execute`, {
+                params = JSON.parse(variables);
+            } catch (e) {
+                showError('参数格式错误，请输入有效的JSON');
+                return;
+            }
+
+            try {
+                const url = `${API_BASE}/subscriptions/${executeContext.sub_key}/versions/${executeContext.version}/execute?type=${executeContext.type}`;
+                const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': AUTH_TOKEN,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        variables: params,
-                        timeout: 30000
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ variables: params, timeout: timeout })
                 });
-                
+
                 const result = await response.json();
+                const resultEl = document.getElementById('executeResult');
+                const contentEl = document.getElementById('executeResultContent');
+
+                resultEl.style.display = 'block';
                 if (result.code === 'OK') {
-                    showSuccess('执行成功！');
-                    console.log('执行结果:', result.data);
+                    contentEl.textContent = JSON.stringify(result.data, null, 2);
+                    contentEl.className = 'bg-light p-3 rounded';
                 } else {
-                    showError('执行失败: ' + result.message);
+                    contentEl.textContent = `错误: ${result.message}`;
+                    contentEl.className = 'bg-danger text-white p-3 rounded';
                 }
             } catch (error) {
                 console.error('Execute subscription error:', error);
@@ -250,25 +434,26 @@
             }
         }
 
+        // 查看详情
+        function viewDetails(sub) {
+            alert(`订阅详情:\n\nKey: ${sub.sub_key}\n版本: ${sub.version}\n标题: ${sub.title}\n描述: ${sub.abstract || '无'}\n状态: ${getStatusText(sub.status)}`);
+        }
+
         // 删除订阅
-        async function deleteSubscription(subKey, version) {
+        async function deleteSubscription(subKey, version, type) {
             if (!confirm(`确定要删除订阅 ${subKey} 版本 ${version} 吗？`)) {
                 return;
             }
-            
+
             try {
-                const response = await fetch(`${API_BASE}/subscriptions/${subKey}/versions/${version}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': AUTH_TOKEN,
-                        'Content-Type': 'application/json'
-                    }
+                const response = await fetch(`${API_BASE}/subscriptions/${subKey}/versions/${version}?type=${type}`, {
+                    method: 'DELETE'
                 });
-                
+
                 const result = await response.json();
                 if (result.code === 'OK') {
                     showSuccess('删除成功！');
-                    loadSubscriptions();
+                    loadSubscriptions(currentPage);
                 } else {
                     showError('删除失败: ' + result.message);
                 }
@@ -278,33 +463,30 @@
             }
         }
 
-        // 编辑订阅（简化实现）
-        function editSubscription(subKey, version) {
-            alert(`编辑功能开发中... 订阅: ${subKey}, 版本: ${version}`);
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchKey').value = '';
+            document.getElementById('filterStatus').value = '';
+            loadSubscriptions(1);
         }
 
         // 工具函数
+        function getTypeText(type) {
+            return type === 'A' ? '分析数据' : '业务数据';
+        }
+
         function getStatusText(status) {
-            const statusMap = {
-                'A': '待生效',
-                'B': '生效中',
-                'C': '强制兼容',
-                'D': '已失效'
-            };
-            return statusMap[status] || status;
+            const map = { 'A': '待生效', 'B': '生效中', 'C': '强制兼容', 'D': '已失效' };
+            return map[status] || status;
         }
 
         function getStatusBadgeClass(status) {
-            const classMap = {
-                'A': 'bg-warning',
-                'B': 'bg-success',
-                'C': 'bg-info',
-                'D': 'bg-secondary'
-            };
-            return classMap[status] || 'bg-secondary';
+            const map = { 'A': 'bg-warning', 'B': 'bg-success', 'C': 'bg-info', 'D': 'bg-secondary' };
+            return map[status] || 'bg-secondary';
         }
 
         function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
             return new Date(dateStr).toLocaleString('zh-CN');
         }
 
@@ -315,11 +497,7 @@
         function showError(message) {
             alert('❌ ' + message);
         }
-
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSubscriptions();
-        });
     </script>
 </body>
+
 </html>

@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"go-bisub/internal/utils"
+	"git.uhomes.net/uhs-go/go-bisub/internal/utils"
 	"gorm.io/gorm"
 )
 

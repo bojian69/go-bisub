@@ -67,3 +67,14 @@ docker-data/
 # Temporary files
 tmp/
 temp/
+
+# Air hot reload
+build-errors.log
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Build artifacts
+*.exe
+*.exe~

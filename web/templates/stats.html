@@ -1,14 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .stat-card {
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .performance-good {
+            color: #28a745;
+        }
+
+        .performance-warning {
+            color: #ffc107;
+        }
+
+        .performance-bad {
+            color: #dc3545;
+        }
+    </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/admin">BI订阅管理</a>
             <div class="navbar-nav">
                 <a class="nav-link" href="/admin/subscriptions">订阅管理</a>
@@ -17,35 +41,75 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <h2>统计报表</h2>
-        
+    <div class="container-fluid mt-4">
+        <h2 class="mb-4">统计报表</h2>
+
         <!-- 查询条件 -->
         <div class="card mb-4">
             <div class="card-body">
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">开始时间</label>
-                        <input type="date" class="form-control" id="startTime">
+                        <input type="datetime-local" class="form-control" id="startTime">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">结束时间</label>
-                        <input type="date" class="form-control" id="endTime">
+                        <input type="datetime-local" class="form-control" id="endTime">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label class="form-label">订阅Key</label>
+                        <input type="text" class="form-control" id="subKey" placeholder="可选">
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label">每页条数</label>
                         <select class="form-select" id="pageSize">
                             <option value="10">10</option>
                             <option value="20" selected>20</option>
                             <option value="50">50</option>
+                            <option value="100">100</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">&nbsp;</label>
                         <div>
-                            <button class="btn btn-primary" onclick="loadStats()">查询</button>
-                            <button class="btn btn-secondary" onclick="resetQuery()">重置</button>
+                            <button class="btn btn-primary w-100" onclick="loadStats()">查询</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="row mb-4" id="statsOverview">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">总调用次数</h6>
+                        <h3 id="totalCalls">-</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">平均执行时间</h6>
+                        <h3 id="avgTime">-</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">最快执行</h6>
+                        <h3 id="minTime" class="performance-good">-</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">最慢执行</h6>
+                        <h3 id="maxTime" class="performance-bad">-</h3>
                     </div>
                 </div>
             </div>
@@ -55,123 +119,205 @@
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-hover">
+                        <thead class="table-light">
                             <tr>
                                 <th>订阅Key</th>
-                                <th>版本号</th>
+                                <th>版本</th>
                                 <th>调用次数</th>
-                                <th>平均执行时间(ms)</th>
-                                <th>最短执行时间(ms)</th>
-                                <th>最长执行时间(ms)</th>
+                                <th>平均时间(ms)</th>
+                                <th>最短时间(ms)</th>
+                                <th>最长时间(ms)</th>
                                 <th>创建人ID</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="statsTableBody">
-                            <!-- 数据通过JavaScript加载 -->
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- 分页 -->
                 <nav>
-                    <ul class="pagination justify-content-center" id="pagination">
-                        <!-- 分页按钮通过JavaScript生成 -->
-                    </ul>
+                    <ul class="pagination justify-content-center" id="pagination"></ul>
                 </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- SQL详情模态框 -->
+    <div class="modal fade" id="sqlModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">SQL详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>最快SQL</strong></label>
+                        <pre class="bg-light p-3 rounded" id="fastestSql"></pre>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>最慢SQL</strong></label>
+                        <pre class="bg-light p-3 rounded" id="slowestSql"></pre>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const API_BASE = '/v1';
         let currentPage = 1;
-        
+        let currentStats = [];
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            initDateRange();
+            loadStats();
+        });
+
+        // 初始化日期范围（默认最近7天）
+        function initDateRange() {
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            document.getElementById('endTime').value = formatDateTimeLocal(now);
+            document.getElementById('startTime').value = formatDateTimeLocal(weekAgo);
+        }
+
         // 加载统计数据
-        function loadStats(page = 1) {
+        async function loadStats(page = 1) {
+            currentPage = page;
             const startTime = document.getElementById('startTime').value;
             const endTime = document.getElementById('endTime').value;
-            const pageSize = document.getElementById('pageSize').value;
-            
-            // 这里应该调用API获取数据，简化实现
+            const subKey = document.getElementById('subKey').value;
+            const limit = parseInt(document.getElementById('pageSize').value);
+            const offset = (page - 1) * limit;
+
+            if (!startTime || !endTime) {
+                showError('请选择开始和结束时间');
+                return;
+            }
+
+            try {
+                let url = `${API_BASE}/subscriptions/stats?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}&limit=${limit}&offset=${offset}`;
+                if (subKey) {
+                    url += `&sub_key=${encodeURIComponent(subKey)}`;
+                }
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.code === 'OK') {
+                    currentStats = result.data || [];
+                    renderStats(currentStats);
+                    updateOverview(currentStats);
+                } else {
+                    showError('获取统计数据失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Load stats error:', error);
+                showError('获取统计数据失败: ' + error.message);
+            }
+        }
+
+        // 渲染统计表格
+        function renderStats(stats) {
             const tbody = document.getElementById('statsTableBody');
-            tbody.innerHTML = `
-                <tr>
-                    <td>house_report</td>
-                    <td>1</td>
-                    <td>156</td>
-                    <td>245.6</td>
-                    <td>89</td>
-                    <td>1205</td>
-                    <td>1</td>
-                </tr>
-                <tr>
-                    <td>user_stats</td>
-                    <td>1</td>
-                    <td>89</td>
-                    <td>156.3</td>
-                    <td>45</td>
-                    <td>890</td>
-                    <td>1</td>
-                </tr>
-                <tr>
-                    <td>house_report</td>
-                    <td>2</td>
-                    <td>23</td>
-                    <td>189.7</td>
-                    <td>67</td>
-                    <td>456</td>
-                    <td>2</td>
-                </tr>
-            `;
-            
-            // 更新分页
-            updatePagination(3, page, parseInt(pageSize));
-        }
-        
-        // 更新分页
-        function updatePagination(total, current, pageSize) {
-            const totalPages = Math.ceil(total / pageSize);
-            const pagination = document.getElementById('pagination');
-            
-            let html = '';
-            
-            // 上一页
-            if (current > 1) {
-                html += `<li class="page-item"><a class="page-link" href="#" onclick="loadStats(${current - 1})">上一页</a></li>`;
+
+            if (stats.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>';
+                return;
             }
-            
-            // 页码
-            for (let i = 1; i <= totalPages; i++) {
-                const active = i === current ? 'active' : '';
-                html += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadStats(${i})">${i}</a></li>`;
-            }
-            
-            // 下一页
-            if (current < totalPages) {
-                html += `<li class="page-item"><a class="page-link" href="#" onclick="loadStats(${current + 1})">下一页</a></li>`;
-            }
-            
-            pagination.innerHTML = html;
-            currentPage = current;
+
+            tbody.innerHTML = stats.map(stat => `
+                <tr>
+                    <td><code>${stat.subscription_key}</code></td>
+                    <td><span class="badge bg-secondary">v${stat.version}</span></td>
+                    <td><strong>${stat.call_count}</strong></td>
+                    <td>${formatTime(stat.avg_execution_time)}</td>
+                    <td class="performance-good">${formatTime(stat.min_execution_time)}</td>
+                    <td class="${getPerformanceClass(stat.max_execution_time)}">${formatTime(stat.max_execution_time)}</td>
+                    <td>${stat.creator_id || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick='showSqlDetails(${JSON.stringify(stat)})'>
+                            查看SQL
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
         }
-        
-        // 重置查询条件
-        function resetQuery() {
-            const today = new Date();
-            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            
-            document.getElementById('startTime').value = weekAgo.toISOString().split('T')[0];
-            document.getElementById('endTime').value = today.toISOString().split('T')[0];
-            document.getElementById('pageSize').value = '20';
-            
-            loadStats();
+
+        // 更新概览统计
+        function updateOverview(stats) {
+            if (stats.length === 0) {
+                document.getElementById('totalCalls').textContent = '0';
+                document.getElementById('avgTime').textContent = '-';
+                document.getElementById('minTime').textContent = '-';
+                document.getElementById('maxTime').textContent = '-';
+                return;
+            }
+
+            const totalCalls = stats.reduce((sum, s) => sum + s.call_count, 0);
+            const avgTimes = stats.map(s => s.avg_execution_time);
+            const minTimes = stats.map(s => s.min_execution_time);
+            const maxTimes = stats.map(s => s.max_execution_time);
+
+            const overallAvg = avgTimes.reduce((sum, t) => sum + t, 0) / avgTimes.length;
+            const overallMin = Math.min(...minTimes);
+            const overallMax = Math.max(...maxTimes);
+
+            document.getElementById('totalCalls').textContent = totalCalls.toLocaleString();
+            document.getElementById('avgTime').textContent = formatTime(overallAvg);
+            document.getElementById('minTime').textContent = formatTime(overallMin);
+            document.getElementById('maxTime').textContent = formatTime(overallMax);
         }
-        
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            resetQuery();
-        });
+
+        // 显示SQL详情
+        function showSqlDetails(stat) {
+            document.getElementById('fastestSql').textContent = stat.fastest_sql || '无数据';
+            document.getElementById('slowestSql').textContent = stat.slowest_sql || '无数据';
+            new bootstrap.Modal(document.getElementById('sqlModal')).show();
+        }
+
+        // 工具函数
+        function formatTime(ms) {
+            if (ms === null || ms === undefined) return '-';
+            return Math.round(ms) + ' ms';
+        }
+
+        function getPerformanceClass(ms) {
+            if (ms < 100) return 'performance-good';
+            if (ms < 500) return 'performance-warning';
+            return 'performance-bad';
+        }
+
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function showError(message) {
+            alert('❌ ' + message);
+        }
     </script>
 </body>
+
 </html>

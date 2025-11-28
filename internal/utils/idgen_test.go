@@ -180,6 +180,17 @@ func TestIDPool(t *testing.T) {
 }
 
 func TestParseSnowflakeID(t *testing.T) {
+	// 保存原始状态
+	origNode := snowflakeNode
+	origOnce := once
+	
+	// 测试结束后恢复
+	t.Cleanup(func() {
+		snowflakeNode = origNode
+		once = origOnce
+	})
+	
+	// 重置并初始化
 	snowflakeNode = nil
 	once = sync.Once{}
 	err := InitSnowflake(1)

@@ -1,0 +1,52 @@
+# 本地开发配置示例
+# 复制此文件为 config.yaml 并根据实际情况修改
+
+server:
+  port: 8080
+  timeout: 120s
+  rate_limit: 1000
+
+database:
+  primary:
+    host: 127.0.0.1
+    port: 3306
+    database: go_sub
+    username: root
+    password: ""  # 修改为你的 MySQL 密码
+    max_idle_conns: 10
+    max_open_conns: 100
+    conn_max_lifetime: 3600s
+  
+  data_sources:
+    default:
+      host: 127.0.0.1
+      port: 3306
+      database: bi_data
+      username: root
+      password: ""  # 修改为你的 MySQL 密码
+      max_idle_conns: 10
+      max_open_conns: 100
+      conn_max_lifetime: 3600s
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: ""
+  db: 0
+
+security:
+  jwt_secret: "your-secret-key-change-in-production"
+  allowed_sql_types:
+    - "SELECT"
+
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
+
+web_ui:
+  username: "admin"
+  password: "admin123"
+
+snowflake:
+  node_id: 1

@@ -23,7 +23,15 @@ help: ## 显示帮助信息
 .PHONY: dev
 dev: ## 启动开发环境（热重载）
 	@echo "Starting development server with hot reload..."
-	air
+	@if command -v air > /dev/null; then \
+		air; \
+	elif [ -f "$(shell go env GOPATH)/bin/air" ]; then \
+		$(shell go env GOPATH)/bin/air; \
+	else \
+		echo "Air not found. Installing..."; \
+		go install github.com/air-verse/air@latest; \
+		$(shell go env GOPATH)/bin/air; \
+	fi
 
 .PHONY: run
 run: ## 运行应用
@@ -52,13 +60,25 @@ build-all: build build-linux build-windows ## 构建所有平台版本
 .PHONY: fmt
 fmt: ## 格式化代码
 	@echo "Formatting code..."
-	go fmt ./...
-	goimports -w .
+	@go fmt ./...
+	@if command -v goimports > /dev/null; then \
+		goimports -w .; \
+	elif [ -f "$(shell go env GOPATH)/bin/goimports" ]; then \
+		$(shell go env GOPATH)/bin/goimports -w .; \
+	else \
+		echo "goimports not found, skipping..."; \
+	fi
 
 .PHONY: lint
 lint: ## 运行代码检查
 	@echo "Running linters..."
-	golangci-lint run
+	@if command -v golangci-lint > /dev/null; then \
+		golangci-lint run; \
+	elif [ -f "$(shell go env GOPATH)/bin/golangci-lint" ]; then \
+		$(shell go env GOPATH)/bin/golangci-lint run; \
+	else \
+		echo "golangci-lint not found. Run: make install-tools"; \
+	fi
 
 .PHONY: vet
 vet: ## 运行go vet
@@ -72,7 +92,14 @@ check: fmt vet lint ## 运行所有代码检查
 .PHONY: test
 test: ## 运行测试
 	@echo "Running tests..."
-	go test -v -race -cover ./...
+	@go mod tidy
+	@go test -v -cover ./...
+
+.PHONY: test-race
+test-race: ## 运行测试（带竞争检测）
+	@echo "Running tests with race detector..."
+	@go mod tidy
+	@go test -v -race -cover ./...
 
 .PHONY: test-coverage
 test-coverage: ## 运行测试并生成覆盖率报告
@@ -141,15 +168,25 @@ docker-compose-logs: ## 查看Docker Compose日志
 	docker-compose logs -f
 
 # 数据库相关命令
+.PHONY: db-init
+db-init: ## 初始化本地数据库
+	@echo "Initializing local database..."
+	@bash scripts/init-local-db.sh
+
+.PHONY: db-check
+db-check: ## 检查数据库连接
+	@echo "Checking database connection..."
+	@bash scripts/check-db.sh
+
 .PHONY: db-migrate-up
 db-migrate-up: ## 执行数据库迁移
 	@echo "Running database migrations..."
-	migrate -path migrations -database "mysql://root:password@tcp(localhost:3306)/go_bisub" up
+	migrate -path migrations -database "mysql://root:password@tcp(localhost:3306)/go_sub" up
 
 .PHONY: db-migrate-down
 db-migrate-down: ## 回滚数据库迁移
 	@echo "Rolling back database migrations..."
-	migrate -path migrations -database "mysql://root:password@tcp(localhost:3306)/go_bisub" down
+	migrate -path migrations -database "mysql://root:password@tcp(localhost:3306)/go_sub" down
 
 .PHONY: db-migrate-create
 db-migrate-create: ## 创建新的迁移文件
@@ -173,7 +210,7 @@ clean-all: clean ## 清理所有生成文件
 .PHONY: install-tools
 install-tools: ## 安装开发工具
 	@echo "Installing development tools..."
-	go install github.com/cosmtrek/air@latest
+	go install github.com/air-verse/air@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
@@ -250,3 +287,25 @@ version: ## 显示版本信息
 init: deps install-tools ## 初始化项目环境
 	@echo "Project initialized successfully!"
 	@echo "Run 'make dev' to start development server"
+
+# 快速启动（不依赖 air）
+.PHONY: start
+start: ## 快速启动服务（无热重载）
+	@echo "Starting server..."
+	@go run cmd/server/main.go
+
+# 使用脚本启动开发环境
+.PHONY: dev-script
+dev-script: ## 使用脚本启动开发环境（自动检查依赖）
+	@bash scripts/dev.sh
+
+# 检查环境
+.PHONY: check-env
+check-env: ## 检查开发环境
+	@echo "Checking environment..."
+	@echo "Go version: $(GO_VERSION)"
+	@echo "GOPATH: $(shell go env GOPATH)"
+	@[ -f "$(shell go env GOPATH)/bin/air" ] && echo "✓ Air installed" || echo "✗ Air not installed (run: make install-tools)"
+	@[ -f "$(shell go env GOPATH)/bin/golangci-lint" ] && echo "✓ golangci-lint installed" || echo "✗ golangci-lint not installed"
+	@[ -f "$(shell go env GOPATH)/bin/goimports" ] && echo "✓ goimports installed" || echo "✗ goimports not installed"
+	@echo "Environment check complete!"

@@ -1,89 +1,44 @@
-# Air 热重载配置文件
 root = "."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  # 构建命令
-  cmd = "go build -o ./tmp/main ./cmd/server"
-  
-  # 构建后执行的命令
-  bin = "tmp/main"
-  
-  # 构建时的参数
   args_bin = []
-  
-  # 监听的文件扩展名
-  include_ext = ["go", "tpl", "tmpl", "html", "yaml", "yml", "json"]
-  
-  # 排除的文件扩展名
-  exclude_ext = ["tmp", "log", "out"]
-  
-  # 监听的目录
-  include_dir = []
-  
-  # 排除的目录
-  exclude_dir = ["assets", "tmp", "vendor", "testdata", "web/dist", "web/node_modules"]
-  
-  # 排除的文件
-  exclude_file = []
-  
-  # 排除的正则表达式
-  exclude_regex = ["_test.go", "_mock.go"]
-  
-  # 排除不变的文件
-  exclude_unchanged = false
-  
-  # 是否跟随符号链接
-  follow_symlink = false
-  
-  # 构建失败时是否停止运行
-  stop_on_root = false
-  
-  # 延迟执行时间（毫秒）
+  bin = "./tmp/main"
+  cmd = "go build -o ./tmp/main ./cmd/server"
   delay = 1000
-  
-  # 发送中断信号前的延迟时间（毫秒）
-  send_interrupt = false
-  
-  # 发送kill信号前的延迟时间（毫秒）
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "web/static", "docs", ".git", ".vscode", ".amazonq"]
+  exclude_file = []
+  exclude_regex = ["_test.go"]
+  exclude_unchanged = false
+  follow_symlink = false
+  full_bin = ""
+  include_dir = []
+  include_ext = ["go", "tpl", "tmpl", "html", "yaml", "yml"]
+  include_file = []
   kill_delay = "0s"
-  
-  # 重新运行的延迟时间
+  log = "build-errors.log"
+  poll = false
+  poll_interval = 0
   rerun = false
-  
-  # 重新运行的延迟时间（毫秒）
   rerun_delay = 500
+  send_interrupt = false
+  stop_on_error = false
 
 [color]
-  # 主要颜色
-  main = "magenta"
-  
-  # 监听器颜色
-  watcher = "cyan"
-  
-  # 构建颜色
+  app = ""
   build = "yellow"
-  
-  # 运行器颜色
+  main = "magenta"
   runner = "green"
+  watcher = "cyan"
 
 [log]
-  # 显示时间
-  time = true
-  
-  # 主要日志级别
   main_only = false
+  time = false
 
 [misc]
-  # 清理屏幕
   clean_on_exit = true
 
-# 自定义命令
-[build.pre_cmd]
-  # 构建前执行的命令
-  # cmd = "echo 'Building...'"
-  
-[build.post_cmd]
-  # 构建后执行的命令
-  # cmd = "echo 'Build completed'"
+[screen]
+  clear_on_rebuild = false
+  keep_scroll = true
