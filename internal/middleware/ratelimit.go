@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 )
 
 type RateLimiter struct {
@@ -40,7 +41,7 @@ func (rl *RateLimiter) RateLimit() gin.HandlerFunc {
 		pipe.ZRemRangeByScore(ctx, key, "0", strconv.FormatInt(now-window, 10))
 
 		// 添加当前请求
-		pipe.ZAdd(ctx, key, &redis.Z{Score: float64(now), Member: now})
+		pipe.ZAdd(ctx, key, redis.Z{Score: float64(now), Member: now})
 
 		// 获取当前窗口内的请求数
 		pipe.ZCard(ctx, key)
@@ -50,6 +51,7 @@ func (rl *RateLimiter) RateLimit() gin.HandlerFunc {
 
 		results, err := pipe.Exec(ctx)
 		if err != nil {
+			logrus.WithError(err).WithField("client_ip", c.ClientIP()).Error("rate limit check failed")
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    "INTERNAL_ERROR",
 				"message": "Rate limit check failed",
@@ -67,6 +69,13 @@ func (rl *RateLimiter) RateLimit() gin.HandlerFunc {
 		c.Header("X-RateLimit-Reset", strconv.FormatInt(now+window, 10))
 
 		if count > int64(rl.limit) {
+			logrus.WithFields(logrus.Fields{
+				"client_ip": c.ClientIP(),
+				"count":     count,
+				"limit":     rl.limit,
+				"path":      c.Request.URL.Path,
+			}).Warn("rate limit exceeded")
+			
 			c.Header("Retry-After", "60")
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"code":    "RATE_LIMITED",

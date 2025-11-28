@@ -1,32 +1,204 @@
+# golangci-lint 配置文件
 run:
   timeout: 5m
+  issues-exit-code: 1
   tests: true
-  modules-download-mode: readonly
+  skip-dirs:
+    - vendor
+    - .git
+    - bin
+    - tmp
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_mock\\.go$"
 
-linters:
-  enable:
-    - gofmt
-    - goimports
-    - govet
-    - errcheck
-    - staticcheck
-    - unused
-    - gosimple
-    - ineffassign
-    - typecheck
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
 
 linters-settings:
-  goimports:
-    local-prefixes: git.uhomes.net/uhs-go/go-bisub
-  
-  govet:
-    check-shadowing: true
-  
+  # 错误检查
   errcheck:
     check-type-assertions: true
     check-blank: true
+    exclude-functions:
+      - fmt.Print
+      - fmt.Println
+      - fmt.Printf
+
+  # 圈复杂度检查
+  gocyclo:
+    min-complexity: 15
+
+  # 认知复杂度检查
+  gocognit:
+    min-complexity: 20
+
+  # 函数长度检查
+  funlen:
+    lines: 100
+    statements: 50
+
+  # 行长度检查
+  lll:
+    line-length: 120
+
+  # 变量命名检查
+  revive:
+    rules:
+      - name: var-naming
+        severity: warning
+        disabled: false
+        arguments:
+          - ["ID"] # 允许ID作为变量名
+
+  # 导入排序
+  goimports:
+    local-prefixes: github.com/your-org/go-bisub
+
+  # 未使用变量检查
+  unused:
+    check-exported: false
+
+  # 拼写检查
+  misspell:
+    locale: US
+
+  # 安全检查
+  gosec:
+    excludes:
+      - G104 # 允许忽略某些错误
+    config:
+      G306: "0644" # 文件权限检查
+
+  # 代码重复检查
+  dupl:
+    threshold: 100
+
+  # 接口检查
+  interfacer:
+    check-exported: true
+
+  # 结构体标签检查
+  govet:
+    check-shadowing: true
+    settings:
+      printf:
+        funcs:
+          - (github.com/sirupsen/logrus.FieldLogger).Infof
+          - (github.com/sirupsen/logrus.FieldLogger).Warnf
+          - (github.com/sirupsen/logrus.FieldLogger).Errorf
+          - (github.com/sirupsen/logrus.FieldLogger).Fatalf
+
+linters:
+  enable:
+    # 默认启用的linters
+    - errcheck      # 检查未处理的错误
+    - gosimple      # 简化代码建议
+    - govet         # go vet检查
+    - ineffassign   # 检查无效赋值
+    - staticcheck   # 静态分析检查
+    - typecheck     # 类型检查
+    - unused        # 检查未使用的代码
+    
+    # 额外启用的linters
+    - gocyclo       # 圈复杂度检查
+    - gocognit      # 认知复杂度检查
+    - funlen        # 函数长度检查
+    - lll           # 行长度检查
+    - revive        # 替代golint的现代化linter
+    - goimports     # 导入排序和格式化
+    - misspell      # 拼写检查
+    - gosec         # 安全检查
+    - dupl          # 代码重复检查
+    - goconst       # 常量检查
+    - gofmt         # 格式检查
+    - gocritic      # 代码质量检查
+    - whitespace    # 空白字符检查
+    - wsl           # 空行检查
+    - nlreturn      # 返回语句前的空行检查
+    - nolintlint    # nolint指令检查
+    - exportloopref # 循环变量引用检查
+    - gomoddirectives # go.mod指令检查
+    - godot         # 注释句号检查
+    - gofumpt       # 更严格的gofmt
+    - goheader      # 文件头检查
+    - goprintffuncname # printf函数命名检查
+    - grouper       # 导入分组检查
+    - importas      # 导入别名检查
+    - makezero      # make slice初始化检查
+    - nakedret      # 裸返回检查
+    - nilerr        # nil错误检查
+    - nilnil        # nil比较检查
+    - noctx         # context检查
+    - predeclared   # 预声明标识符检查
+    - promlinter    # Prometheus指标检查
+    - rowserrcheck  # sql.Rows错误检查
+    - sqlclosecheck # SQL关闭检查
+    - tenv          # 测试环境变量检查
+    - tparallel     # 并行测试检查
+    - unconvert     # 不必要的类型转换检查
+    - unparam       # 未使用参数检查
+    - wastedassign  # 浪费的赋值检查
+
+  disable:
+    - deadcode      # 已废弃，使用unused替代
+    - varcheck      # 已废弃，使用unused替代
+    - structcheck   # 已废弃，使用unused替代
+    - golint        # 已废弃，使用revive替代
+    - interfacer    # 已废弃
+    - scopelint     # 已废弃，使用exportloopref替代
+    - maligned      # 已废弃，使用govet fieldalignment替代
 
 issues:
-  exclude-use-default: false
+  # 排除特定问题
+  exclude-rules:
+    # 测试文件中允许长函数
+    - path: _test\.go
+      linters:
+        - funlen
+        - gocyclo
+        - gocognit
+        - dupl
+
+    # main函数允许长度超限
+    - path: cmd/
+      linters:
+        - funlen
+
+    # 生成的代码跳过检查
+    - path: ".*\\.pb\\.go"
+      linters:
+        - all
+
+    # Mock文件跳过检查
+    - path: ".*_mock\\.go"
+      linters:
+        - all
+
+    # 允许在测试中使用点导入
+    - path: _test\.go
+      text: "dot imports"
+      linters:
+        - revive
+
+    # 允许在init函数中使用全局变量
+    - text: "G101|G102|G103|G104|G106|G107"
+      linters:
+        - gosec
+
+  # 最大问题数量
   max-issues-per-linter: 0
   max-same-issues: 0
+
+  # 新代码检查
+  new: false
+  new-from-rev: ""
+  new-from-patch: ""
+
+  # 排除默认的排除规则
+  exclude-use-default: false
+
+  # 修复建议
+  fix: false
