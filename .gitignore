@@ -10,15 +10,15 @@ dist/
 # Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool
+# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
 
 # Go workspace file
 go.work
-
-# Dependency directories
-vendor/
-node_modules/
+go.work.sum
 
 # IDE files
 .vscode/
@@ -33,52 +33,37 @@ node_modules/
 ._*
 .Spotlight-V100
 .Trashes
+.amazonq
 ehthumbs.db
 Thumbs.db
 
-# Log files
-logs/
+# Logs
 *.log
+logs/
 
-# Local configuration files
-configs/config.local.yaml
-configs/config.production.yaml
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Environment variables
 .env
 .env.local
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
+# Config files with sensitive data
+config.prod.yaml
+config.staging.yaml
+
+# Docker volumes
+docker-data/
 
 # Temporary files
 tmp/
 temp/
-.tmp/
-
-# Build artifacts
-web/dist/
-web/node_modules/
-
-# Docker volumes
-data/
-
-# Backup files
-*.bak
-*.backup
-
-# Coverage reports
-coverage.txt
-coverage.html
-
-# Test files
-*_test.go.orig
-
-# Air live reload
-.air.toml
-
-# Local development
-.local/
-
-.amazonq
