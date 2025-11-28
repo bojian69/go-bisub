@@ -7,12 +7,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig            `mapstructure:"server"`
-	Database DatabaseConfig          `mapstructure:"database"`
-	Security SecurityConfig          `mapstructure:"security"`
-	Logging  LoggingConfig           `mapstructure:"logging"`
-	Redis    RedisConfig             `mapstructure:"redis"`
-	WebUI    WebUIConfig             `mapstructure:"web_ui"`
+	Server   ServerConfig   `mapstructure:"server"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Security SecurityConfig `mapstructure:"security"`
+	Logging  LoggingConfig  `mapstructure:"logging"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	WebUI    WebUIConfig    `mapstructure:"web_ui"`
 }
 
 type ServerConfig struct {

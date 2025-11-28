@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"git.uhomes.net/uhs-go/go-bisub/internal/models"
@@ -28,8 +27,8 @@ func (r *SubscriptionRepository) Create(ctx context.Context, subscription *model
 	// 如果状态为强制兼容，先将同key的低版本设为失效
 	if subscription.Status == models.StatusActiveForceCompatible {
 		if err := tx.Model(&models.Subscription{}).
-			Where("type = ? AND sub_key = ? AND version < ? AND status IN (?, ?)", 
-				subscription.Type, subscription.SubKey, subscription.Version, 
+			Where("type = ? AND sub_key = ? AND version < ? AND status IN (?, ?)",
+				subscription.Type, subscription.SubKey, subscription.Version,
 				models.StatusActive, models.StatusActiveForceCompatible).
 			Update("status", models.StatusExpired).Error; err != nil {
 			tx.Rollback()
@@ -87,6 +86,18 @@ func (r *SubscriptionRepository) Update(ctx context.Context, subscription *model
 	return r.db.WithContext(ctx).Save(subscription).Error
 }
 
+func (r *SubscriptionRepository) UpdateFields(ctx context.Context, subType, key string, version uint8, updates map[string]interface{}) error {
+	return r.db.WithContext(ctx).Model(&models.Subscription{}).
+		Where("type = ? AND sub_key = ? AND version = ?", subType, key, version).
+		Updates(updates).Error
+}
+
+func (r *SubscriptionRepository) UpdateStatus(ctx context.Context, subType, key string, version uint8, status string) error {
+	return r.db.WithContext(ctx).Model(&models.Subscription{}).
+		Where("type = ? AND sub_key = ? AND version = ?", subType, key, version).
+		Update("status", status).Error
+}
+
 func (r *SubscriptionRepository) Delete(ctx context.Context, subType, key string, version uint8) error {
 	return r.db.WithContext(ctx).
 		Where("type = ? AND sub_key = ? AND version = ?", subType, key, version).
@@ -107,7 +118,7 @@ func (r *StatsRepository) Create(ctx context.Context, stats *models.Subscription
 
 func (r *StatsRepository) GetStats(ctx context.Context, startTime, endTime time.Time, limit, offset int) ([]*models.StatsResponse, error) {
 	var results []*models.StatsResponse
-	
+
 	query := `
 		SELECT 
 			s.sub_key,
@@ -132,10 +143,10 @@ func (r *StatsRepository) GetStats(ctx context.Context, startTime, endTime time.
 		ORDER BY avg_execution_time DESC
 		LIMIT ? OFFSET ?
 	`
-	
-	err := r.db.WithContext(ctx).Raw(query, 
+
+	err := r.db.WithContext(ctx).Raw(query,
 		startTime, endTime, startTime, endTime, startTime, endTime, limit, offset).
 		Scan(&results).Error
-	
+
 	return results, err
 }

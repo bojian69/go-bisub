@@ -51,6 +51,35 @@ CREATE TABLE IF NOT EXISTS `sub_refs` (
 	KEY `idx_reffield_refvalue` (`ref_field`,`ref_value`)
 ) DEFAULT CHARACTER SET=utf8 COMMENT='sub-字段参考表';
 
+-- 创建操作日志表
+CREATE TABLE IF NOT EXISTS `sub_logs_operation` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `user_id` bigint unsigned NOT NULL DEFAULT '0' COMMENT '操作用户ID',
+  `username` varchar(120) NOT NULL DEFAULT '' COMMENT '操作用户名',
+  `operation` varchar(50) NOT NULL DEFAULT '' COMMENT '操作类型',
+  `resource` varchar(200) NOT NULL DEFAULT '' COMMENT '操作资源',
+  `resource_id` varchar(120) DEFAULT '' COMMENT '资源ID',
+  `status` varchar(20) NOT NULL DEFAULT '' COMMENT '操作状态',
+  `client_ip` varchar(45) NOT NULL DEFAULT '' COMMENT '客户端IP',
+  `user_agent` varchar(500) DEFAULT '' COMMENT '用户代理',
+  `request_url` varchar(1000) DEFAULT '' COMMENT '请求URL',
+  `method` varchar(10) NOT NULL DEFAULT '' COMMENT 'HTTP方法',
+  `duration` int unsigned NOT NULL DEFAULT '0' COMMENT '执行耗时(毫秒)',
+  `error_msg` text COMMENT '错误信息',
+  `request_data` json DEFAULT NULL COMMENT '请求数据',
+  `response_data` json DEFAULT NULL COMMENT '响应数据',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_username` (`username`),
+  KEY `idx_operation` (`operation`),
+  KEY `idx_resource` (`resource`),
+  KEY `idx_status` (`status`),
+  KEY `idx_client_ip` (`client_ip`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
+
 -- 插入测试数据
 INSERT INTO `sub_refs` (`id`, `ref_field`, `ref_value`, `ref_name`, `ref_name_en`, `sort`)
 VALUES

@@ -29,10 +29,17 @@ deps:
 # 代码格式化
 fmt:
 	go fmt ./...
+	@command -v goimports >/dev/null 2>&1 && goimports -w . || echo "goimports not installed, run: go install golang.org/x/tools/cmd/goimports@latest"
 
 # 代码检查
 lint:
-	golangci-lint run
+	@command -v golangci-lint >/dev/null 2>&1 && golangci-lint run || echo "golangci-lint not installed"
+
+# 检查未使用的导入
+check-imports:
+	@echo "Checking for unused imports..."
+	@go list -f '{{.Dir}}' ./... | xargs -I {} sh -c 'cd {} && go list -f "{{.ImportPath}}: {{.Imports}}" . | grep -v "_test" || true'
+	@goimports -l . | grep . && echo "Found files with incorrect imports (run 'make fmt' to fix)" && exit 1 || echo "All imports are correct"
 
 # Docker构建
 docker-build:

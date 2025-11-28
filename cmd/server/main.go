@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// 自动迁移
-	if err := primaryDB.AutoMigrate(&models.Subscription{}, &models.SubscriptionStats{}); err != nil {
+	if err := primaryDB.AutoMigrate(&models.Subscription{}, &models.SubscriptionStats{}, &models.OperationLog{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
@@ -66,12 +66,18 @@ func main() {
 	// 初始化仓库
 	subscriptionRepo := repository.NewSubscriptionRepository(primaryDB)
 	statsRepo := repository.NewStatsRepository(primaryDB)
+	refsRepo := repository.NewRefsRepository(primaryDB)
+	operationLogRepo := repository.NewOperationLogRepository(primaryDB)
 
 	// 初始化服务
 	subscriptionService := service.NewSubscriptionService(subscriptionRepo, statsRepo, dataSources, cfg)
+	refsService := service.NewRefsService(refsRepo)
+	operationLogService := service.NewOperationLogService(operationLogRepo)
 
 	// 初始化处理器
-	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
+	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService, operationLogService)
+	refsHandler := handler.NewRefsHandler(refsService)
+	operationLogHandler := handler.NewOperationLogHandler(operationLogService)
 
 	// 初始化中间件
 	authMiddleware := middleware.NewAuthMiddleware(cfg)
@@ -99,42 +105,60 @@ func main() {
 	v1.Use(rateLimiter.RateLimit())
 	v1.Use(authMiddleware.JWTAuth())
 	{
+		// 订阅类型和状态
+		v1.GET("/refs/subscription-types", refsHandler.GetSubscriptionTypes)
+		v1.GET("/refs/subscription-statuses", refsHandler.GetSubscriptionStatuses)
+
 		// 订阅管理
 		v1.GET("/subscriptions", subscriptionHandler.GetSubscriptions)
 		v1.POST("/subscriptions", subscriptionHandler.CreateSubscription)
 		v1.GET("/subscriptions/:key", subscriptionHandler.GetSubscription)
 		v1.GET("/subscriptions/:key/versions/:version", subscriptionHandler.GetSubscription)
-		
+		v1.PUT("/subscriptions/:key/versions/:version", subscriptionHandler.UpdateSubscription)
+		v1.PATCH("/subscriptions/:key/versions/:version/status", subscriptionHandler.UpdateSubscriptionStatus)
+		v1.DELETE("/subscriptions/:key/versions/:version", subscriptionHandler.DeleteSubscription)
+
 		// 订阅执行
-		v1.POST("/subscriptions/:key:execute", subscriptionHandler.ExecuteSubscription)
-		v1.POST("/subscriptions/:key/versions/:version:execute", subscriptionHandler.ExecuteSubscription)
-		
+		v1.POST("/subscriptions/:key/execute", subscriptionHandler.ExecuteSubscription)
+		v1.POST("/subscriptions/:key/versions/:version/execute", subscriptionHandler.ExecuteSubscription)
+
 		// 统计查询
 		v1.GET("/subscriptions/stats", subscriptionHandler.GetStats)
+
+		// 操作日志
+		v1.GET("/operation-logs", operationLogHandler.GetOperationLogs)
 	}
+
+	// 加载HTML模板
+	router.LoadHTMLGlob("web/templates/*")
 
 	// Web UI路由（简单的基础认证）
 	webUI := router.Group("/admin")
 	webUI.Use(authMiddleware.BasicAuth())
 	{
 		webUI.Static("/static", "./web/static")
-		webUI.LoadHTMLGlob("web/templates/*")
-		
+
 		webUI.GET("/", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", gin.H{
 				"title": "BI Subscription Management",
 			})
 		})
-		
+
 		webUI.GET("/subscriptions", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "subscriptions.html", gin.H{
 				"title": "Subscription Management",
 			})
 		})
-		
+
 		webUI.GET("/stats", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "stats.html", gin.H{
 				"title": "Statistics",
+			})
+		})
+
+		webUI.GET("/operation-logs", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "operation_logs.html", gin.H{
+				"title": "Operation Logs",
 			})
 		})
 	}

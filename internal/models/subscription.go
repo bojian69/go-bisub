@@ -7,10 +7,10 @@ import (
 
 // SubscriptionStatus 订阅状态
 const (
-	StatusPending              = "A" // 待生效
-	StatusActive               = "B" // 生效中
+	StatusPending               = "A" // 待生效
+	StatusActive                = "B" // 生效中
 	StatusActiveForceCompatible = "C" // 生效中（强制兼容低版本）
-	StatusExpired              = "D" // 已失效
+	StatusExpired               = "D" // 已失效
 )
 
 // SubscriptionType 订阅类型
@@ -20,9 +20,9 @@ const (
 
 // ExtraConfig 扩展配置
 type ExtraConfig struct {
-	SQLContent  string            `json:"sql_content"`  // 订阅数据SQL
-	SQLReplace  map[string]string `json:"sql_replace"`  // SQL替换变量说明
-	Example     string            `json:"example"`      // 示例说明
+	SQLContent string            `json:"sql_content"` // 订阅数据SQL
+	SQLReplace map[string]string `json:"sql_replace"` // SQL替换变量说明
+	Example    string            `json:"example"`     // 示例说明
 }
 
 // Subscription 订阅模型
@@ -81,10 +81,23 @@ type CreateSubscriptionRequest struct {
 	ExtraConfig json.RawMessage `json:"extra_config" binding:"required"`
 }
 
+// UpdateSubscriptionRequest 更新订阅请求
+type UpdateSubscriptionRequest struct {
+	Title       string          `json:"title"`
+	Abstract    string          `json:"abstract"`
+	Status      string          `json:"status" binding:"omitempty,len=1"`
+	ExtraConfig json.RawMessage `json:"extra_config"`
+}
+
+// UpdateStatusRequest 更新状态请求
+type UpdateStatusRequest struct {
+	Status string `json:"status" binding:"required,len=1"`
+}
+
 // ExecuteSubscriptionRequest 执行订阅请求
 type ExecuteSubscriptionRequest struct {
 	Variables  map[string]interface{} `json:"variables"`
-	Timeout    int                    `json:"timeout"`    // 毫秒，默认120000
+	Timeout    int                    `json:"timeout"`     // 毫秒，默认120000
 	DataSource string                 `json:"data_source"` // 数据源名称，默认default
 }
 
@@ -98,13 +111,13 @@ type StatsQueryRequest struct {
 
 // StatsResponse 统计响应
 type StatsResponse struct {
-	SubKey              string  `json:"sub_key"`
-	Version             uint8   `json:"version"`
-	CallCount           int64   `json:"call_count"`
-	AvgExecutionTime    float64 `json:"avg_execution_time"`
-	MinExecutionTime    uint32  `json:"min_execution_time"`
-	MaxExecutionTime    uint32  `json:"max_execution_time"`
-	FastestSQL          string  `json:"fastest_sql"`
-	SlowestSQL          string  `json:"slowest_sql"`
-	CreatedBy           uint64  `json:"created_by"`
+	SubKey           string  `json:"sub_key"`
+	Version          uint8   `json:"version"`
+	CallCount        int64   `json:"call_count"`
+	AvgExecutionTime float64 `json:"avg_execution_time"`
+	MinExecutionTime uint32  `json:"min_execution_time"`
+	MaxExecutionTime uint32  `json:"max_execution_time"`
+	FastestSQL       string  `json:"fastest_sql"`
+	SlowestSQL       string  `json:"slowest_sql"`
+	CreatedBy        uint64  `json:"created_by"`
 }

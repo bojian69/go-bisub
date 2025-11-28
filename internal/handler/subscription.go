@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"git.uhomes.net/uhs-go/go-bisub/internal/models"
 	"git.uhomes.net/uhs-go/go-bisub/internal/service"
@@ -11,11 +12,15 @@ import (
 )
 
 type SubscriptionHandler struct {
-	service *service.SubscriptionService
+	service    *service.SubscriptionService
+	logService *service.OperationLogService
 }
 
-func NewSubscriptionHandler(service *service.SubscriptionService) *SubscriptionHandler {
-	return &SubscriptionHandler{service: service}
+func NewSubscriptionHandler(service *service.SubscriptionService, logService *service.OperationLogService) *SubscriptionHandler {
+	return &SubscriptionHandler{
+		service:    service,
+		logService: logService,
+	}
 }
 
 // APIResponse 标准API响应
@@ -29,8 +34,11 @@ type APIResponse struct {
 
 // CreateSubscription 创建订阅
 func (h *SubscriptionHandler) CreateSubscription(c *gin.Context) {
+	startTime := time.Now()
 	var req models.CreateSubscriptionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		// 记录操作日志
+		h.logOperation(c, models.OpTypeCreate, "subscription", "", models.OpStatusFailed, time.Since(startTime), err.Error(), req, nil)
 		c.JSON(http.StatusBadRequest, APIResponse{
 			Code:      "INVALID_PARAMETER",
 			Message:   err.Error(),
@@ -44,6 +52,8 @@ func (h *SubscriptionHandler) CreateSubscription(c *gin.Context) {
 
 	subscription, err := h.service.CreateSubscription(c.Request.Context(), &req, creatorID)
 	if err != nil {
+		// 记录操作日志
+		h.logOperation(c, models.OpTypeCreate, "subscription", req.SubKey, models.OpStatusFailed, time.Since(startTime), err.Error(), req, nil)
 		c.JSON(http.StatusInternalServerError, APIResponse{
 			Code:      "INTERNAL_ERROR",
 			Message:   err.Error(),
@@ -51,6 +61,9 @@ func (h *SubscriptionHandler) CreateSubscription(c *gin.Context) {
 		})
 		return
 	}
+
+	// 记录操作日志
+	h.logOperation(c, models.OpTypeCreate, "subscription", req.SubKey, models.OpStatusSuccess, time.Since(startTime), "", req, subscription)
 
 	c.JSON(http.StatusCreated, APIResponse{
 		Code:      "OK",
@@ -62,6 +75,7 @@ func (h *SubscriptionHandler) CreateSubscription(c *gin.Context) {
 
 // ExecuteSubscription 执行订阅
 func (h *SubscriptionHandler) ExecuteSubscription(c *gin.Context) {
+	startTime := time.Now()
 	subType := c.DefaultQuery("type", "A") // 默认为分析数据
 	key := c.Param("key")
 	if key == "" {
@@ -108,6 +122,9 @@ func (h *SubscriptionHandler) ExecuteSubscription(c *gin.Context) {
 		})
 		return
 	}
+
+	// 记录操作日志
+	h.logOperation(c, models.OpTypeExecute, "subscription", key, models.OpStatusSuccess, time.Since(startTime), "", req, results)
 
 	c.JSON(http.StatusOK, APIResponse{
 		Code:      "OK",
@@ -188,6 +205,178 @@ func (h *SubscriptionHandler) GetSubscription(c *gin.Context) {
 	})
 }
 
+// UpdateSubscription 更新订阅
+func (h *SubscriptionHandler) UpdateSubscription(c *gin.Context) {
+	subType := c.DefaultQuery("type", "A")
+	key := c.Param("key")
+	if key == "" {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   "subscription key is required",
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	var version uint8
+	if versionStr := c.Param("version"); versionStr != "" {
+		if v, err := strconv.ParseUint(versionStr, 10, 8); err == nil {
+			version = uint8(v)
+		} else {
+			c.JSON(http.StatusBadRequest, APIResponse{
+				Code:      "INVALID_PARAMETER",
+				Message:   "invalid version",
+				RequestID: getRequestID(c),
+			})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   "version is required",
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	var req models.UpdateSubscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   err.Error(),
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	subscription, err := h.service.UpdateSubscription(c.Request.Context(), subType, key, version, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, APIResponse{
+			Code:      "INTERNAL_ERROR",
+			Message:   err.Error(),
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, APIResponse{
+		Code:      "OK",
+		Message:   "更新成功",
+		RequestID: getRequestID(c),
+		Data:      subscription,
+	})
+}
+
+// UpdateSubscriptionStatus 更新订阅状态
+func (h *SubscriptionHandler) UpdateSubscriptionStatus(c *gin.Context) {
+	subType := c.DefaultQuery("type", "A")
+	key := c.Param("key")
+	if key == "" {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   "subscription key is required",
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	var version uint8
+	if versionStr := c.Param("version"); versionStr != "" {
+		if v, err := strconv.ParseUint(versionStr, 10, 8); err == nil {
+			version = uint8(v)
+		} else {
+			c.JSON(http.StatusBadRequest, APIResponse{
+				Code:      "INVALID_PARAMETER",
+				Message:   "invalid version",
+				RequestID: getRequestID(c),
+			})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   "version is required",
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	var req models.UpdateStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   err.Error(),
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	if err := h.service.UpdateStatus(c.Request.Context(), subType, key, version, req.Status); err != nil {
+		c.JSON(http.StatusInternalServerError, APIResponse{
+			Code:      "INTERNAL_ERROR",
+			Message:   err.Error(),
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, APIResponse{
+		Code:      "OK",
+		Message:   "状态更新成功",
+		RequestID: getRequestID(c),
+	})
+}
+
+// DeleteSubscription 删除订阅
+func (h *SubscriptionHandler) DeleteSubscription(c *gin.Context) {
+	subType := c.DefaultQuery("type", "A")
+	key := c.Param("key")
+	if key == "" {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   "subscription key is required",
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	var version uint8
+	if versionStr := c.Param("version"); versionStr != "" {
+		if v, err := strconv.ParseUint(versionStr, 10, 8); err == nil {
+			version = uint8(v)
+		} else {
+			c.JSON(http.StatusBadRequest, APIResponse{
+				Code:      "INVALID_PARAMETER",
+				Message:   "invalid version",
+				RequestID: getRequestID(c),
+			})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, APIResponse{
+			Code:      "INVALID_PARAMETER",
+			Message:   "version is required",
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	if err := h.service.DeleteSubscription(c.Request.Context(), subType, key, version); err != nil {
+		c.JSON(http.StatusInternalServerError, APIResponse{
+			Code:      "INTERNAL_ERROR",
+			Message:   err.Error(),
+			RequestID: getRequestID(c),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, APIResponse{
+		Code:      "OK",
+		Message:   "删除成功",
+		RequestID: getRequestID(c),
+	})
+}
+
 // GetStats 获取统计数据
 func (h *SubscriptionHandler) GetStats(c *gin.Context) {
 	var req models.StatsQueryRequest
@@ -223,4 +412,33 @@ func getRequestID(c *gin.Context) string {
 		return requestID
 	}
 	return uuid.New().String()
+}
+
+// logOperation 记录操作日志
+func (h *SubscriptionHandler) logOperation(c *gin.Context, operation, resource, resourceID, status string, duration time.Duration, errorMsg string, requestData, responseData interface{}) {
+	if h.logService == nil {
+		return
+	}
+
+	userID := uint64(1) // 从上下文获取
+	username := "admin" // 从上下文获取
+
+	log := h.logService.CreateOperationLog(
+		userID,
+		username,
+		operation,
+		resource,
+		resourceID,
+		status,
+		c.ClientIP(),
+		c.GetHeader("User-Agent"),
+		c.Request.URL.String(),
+		c.Request.Method,
+		uint32(duration.Milliseconds()),
+		errorMsg,
+		requestData,
+		responseData,
+	)
+
+	h.logService.LogOperation(c.Request.Context(), log)
 }
