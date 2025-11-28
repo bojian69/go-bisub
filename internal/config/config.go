@@ -44,8 +44,12 @@ type SecurityConfig struct {
 }
 
 type LoggingConfig struct {
-	Level  string `mapstructure:"level"`
-	Format string `mapstructure:"format"`
+	Level          string `mapstructure:"level"`
+	Format         string `mapstructure:"format"`
+	FileLogEnabled bool   `mapstructure:"file_log_enabled"`
+	FileLogDir     string `mapstructure:"file_log_dir"`
+	LogRequestBody bool   `mapstructure:"log_request_body"`
+	LogResponseBody bool  `mapstructure:"log_response_body"`
 }
 
 type RedisConfig struct {

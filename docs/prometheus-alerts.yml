@@ -1,0 +1,198 @@
+# Prometheus 告警规则配置
+# 基于 Uhomes 微服务规范
+
+groups:
+  - name: go-bisub-critical
+    interval: 30s
+    rules:
+      # 严重告警：错误率 > 5% 持续 5 分钟
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{service="go-bisub",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{service="go-bisub"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: go-bisub
+        annotations:
+          summary: "高错误率告警"
+          description: "服务 {{ $labels.service }} 错误率超过 5%，当前值: {{ $value | humanizePercentage }}"
+          
+      # 严重告警：P99 延迟 > 1s 持续 5 分钟
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{service="go-bisub"}[5m])) by (le, service)
+          ) > 1
+        for: 5m
+        labels:
+          severity: critical
+          service: go-bisub
+        annotations:
+          summary: "P99 延迟过高"
+          description: "服务 {{ $labels.service }} P99 延迟超过 1 秒，当前值: {{ $value }}s"
+          
+      # 严重告警：服务可用性 < 99.9%
+      - alert: LowServiceAvailability
+        expr: |
+          (
+            sum(rate(http_requests_total{service="go-bisub",status!~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{service="go-bisub"}[5m]))
+          ) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          service: go-bisub
+        annotations:
+          summary: "服务可用性低"
+          description: "服务 {{ $labels.service }} 可用性低于 99.9%，当前值: {{ $value | humanizePercentage }}"
+          
+      # 严重告警：数据库连接池耗尽
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          db_connections{service="go-bisub",state="idle"} < 2
+        for: 2m
+        labels:
+          severity: critical
+          service: go-bisub
+        annotations:
+          summary: "数据库连接池耗尽"
+          description: "服务 {{ $labels.service }} 数据库 {{ $labels.database }} 空闲连接数过低: {{ $value }}"
+
+  - name: go-bisub-warning
+    interval: 1m
+    rules:
+      # 警告告警：错误率 > 1% 持续 10 分钟
+      - alert: ElevatedErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{service="go-bisub",status=~"5.."}[10m]))
+            /
+            sum(rate(http_requests_total{service="go-bisub"}[10m]))
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "错误率升高"
+          description: "服务 {{ $labels.service }} 错误率超过 1%，当前值: {{ $value | humanizePercentage }}"
+          
+      # 警告告警：P95 延迟 > 500ms 持续 10 分钟
+      - alert: ElevatedP95Latency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{service="go-bisub"}[10m])) by (le, service)
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "P95 延迟升高"
+          description: "服务 {{ $labels.service }} P95 延迟超过 500ms，当前值: {{ $value }}s"
+          
+      # 警告告警：内存使用 > 80%
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            system_memory_usage_bytes{service="go-bisub",type="used"}
+            /
+            system_memory_usage_bytes{service="go-bisub",type="total"}
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "内存使用率高"
+          description: "服务 {{ $labels.service }} 内存使用率超过 80%，当前值: {{ $value | humanizePercentage }}"
+          
+      # 警告告警：磁盘使用 > 85%
+      - alert: HighDiskUsage
+        expr: |
+          system_disk_usage_percent{service="go-bisub"} > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "磁盘使用率高"
+          description: "服务 {{ $labels.service }} 磁盘 {{ $labels.mount }} 使用率超过 85%，当前值: {{ $value }}%"
+          
+      # 警告告警：慢查询增多
+      - alert: HighSlowQueryRate
+        expr: |
+          rate(db_slow_queries_total{service="go-bisub"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "慢查询数量增多"
+          description: "服务 {{ $labels.service }} 数据库 {{ $labels.database }} 慢查询速率: {{ $value }}/s"
+          
+      # 警告告警：CPU 使用率高
+      - alert: HighCPUUsage
+        expr: |
+          system_cpu_usage_percent{service="go-bisub"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "CPU 使用率高"
+          description: "服务 {{ $labels.service }} CPU 使用率超过 80%，当前值: {{ $value }}%"
+
+  - name: go-bisub-business
+    interval: 1m
+    rules:
+      # 业务告警：订阅执行失败率高
+      - alert: HighSubscriptionExecutionFailureRate
+        expr: |
+          (
+            sum(rate(execution_total{service="go-bisub",status="error"}[5m]))
+            /
+            sum(rate(execution_total{service="go-bisub"}[5m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "订阅执行失败率高"
+          description: "服务 {{ $labels.service }} 订阅执行失败率超过 10%，当前值: {{ $value | humanizePercentage }}"
+          
+      # 业务告警：订阅执行延迟高
+      - alert: HighSubscriptionExecutionLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(execution_duration_seconds_bucket{service="go-bisub"}[5m])) by (le, service, subscription_key)
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "订阅执行延迟高"
+          description: "服务 {{ $labels.service }} 订阅 {{ $labels.subscription_key }} P95 执行延迟超过 30 秒，当前值: {{ $value }}s"
+          
+      # 业务告警：数据库查询失败率高
+      - alert: HighDatabaseQueryFailureRate
+        expr: |
+          (
+            sum(rate(db_queries_total{service="go-bisub",status="error"}[5m]))
+            /
+            sum(rate(db_queries_total{service="go-bisub"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: go-bisub
+        annotations:
+          summary: "数据库查询失败率高"
+          description: "服务 {{ $labels.service }} 数据库 {{ $labels.database }} 查询失败率超过 5%，当前值: {{ $value | humanizePercentage }}"

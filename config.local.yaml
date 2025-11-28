@@ -52,6 +52,10 @@ security:
 logging:
   level: "debug"
   format: "json"
+  file_log_enabled: true
+  file_log_dir: "./logs"
+  log_request_body: true
+  log_response_body: true
   output: "stdout"
 
 web_ui:

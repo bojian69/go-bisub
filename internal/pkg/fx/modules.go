@@ -10,9 +10,11 @@ import (
 	"git.uhomes.net/uhs-go/go-bisub/internal/middleware"
 	"git.uhomes.net/uhs-go/go-bisub/internal/models"
 	"git.uhomes.net/uhs-go/go-bisub/internal/pkg/logger"
+	"git.uhomes.net/uhs-go/go-bisub/internal/pkg/metrics"
 	"git.uhomes.net/uhs-go/go-bisub/internal/repository"
 	"git.uhomes.net/uhs-go/go-bisub/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"gorm.io/driver/mysql"
@@ -30,9 +32,22 @@ var LoggerModule = fx.Module("logger",
 		isDev := cfg.Logging.Level == "debug"
 		return logger.NewLogger(cfg.Logging.Level, isDev)
 	}),
-	fx.Invoke(func(l *logger.Logger) {
+	fx.Invoke(func(l *logger.Logger, cfg *config.Config) {
 		logger.SetDefault(l)
 		slog.Info("Logger initialized")
+		
+		// 初始化文件日志
+		if cfg.Logging.FileLogEnabled {
+			logDir := cfg.Logging.FileLogDir
+			if logDir == "" {
+				logDir = "./logs"
+			}
+			if err := logger.InitFileLogger(logDir); err != nil {
+				slog.Error("Failed to initialize file logger", "error", err)
+			} else {
+				slog.Info("File logger initialized", "dir", logDir)
+			}
+		}
 	}),
 )
 
@@ -48,7 +63,15 @@ var DatabaseModule = fx.Module("database",
 				cfg.Database.Primary.Database,
 			)
 
-			db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+			// 配置GORM日志
+			gormConfig := &gorm.Config{}
+			if cfg.Logging.FileLogEnabled {
+				fileLogger := logger.GetFileLogger()
+				gormLogger := logger.NewGormLogger(fileLogger)
+				gormConfig.Logger = gormLogger
+			}
+
+			db, err := gorm.Open(mysql.Open(dsn), gormConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -73,6 +96,14 @@ var DatabaseModule = fx.Module("database",
 			dataSources := make(map[string]*gorm.DB)
 			dataSources["primary"] = primaryDB
 
+			// 配置GORM日志
+			gormConfig := &gorm.Config{}
+			if cfg.Logging.FileLogEnabled {
+				fileLogger := logger.GetFileLogger()
+				gormLogger := logger.NewGormLogger(fileLogger)
+				gormConfig.Logger = gormLogger
+			}
+
 			for name, dbConfig := range cfg.Database.DataSources {
 				dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 					dbConfig.Username,
@@ -82,7 +113,7 @@ var DatabaseModule = fx.Module("database",
 					dbConfig.Database,
 				)
 
-				db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+				db, err := gorm.Open(mysql.Open(dsn), gormConfig)
 				if err != nil {
 					slog.Error("Failed to connect to data source", "name", name, "error", err)
 					continue
@@ -162,6 +193,7 @@ var MiddlewareModule = fx.Module("middleware",
 var HTTPModule = fx.Module("http",
 	fx.Provide(NewGinEngine),
 	fx.Invoke(RegisterRoutes),
+	fx.Invoke(InitMetrics),
 )
 
 // NewGinEngine creates a new Gin engine
@@ -173,10 +205,30 @@ func NewGinEngine(cfg *config.Config) *gin.Engine {
 	}
 
 	engine := gin.New()
-	engine.Use(gin.Logger())
 	engine.Use(gin.Recovery())
+	
+	// 使用指标中间件
+	engine.Use(middleware.MetricsMiddleware("go-bisub"))
+	
+	// 使用自定义日志中间件
+	if cfg.Logging.FileLogEnabled {
+		if cfg.Logging.LogRequestBody && cfg.Logging.LogResponseBody {
+			engine.Use(middleware.LoggerMiddleware())
+		} else {
+			engine.Use(middleware.SimpleLoggerMiddleware())
+		}
+	} else {
+		engine.Use(gin.Logger())
+	}
 
 	return engine
+}
+
+// InitMetrics 初始化指标系统
+func InitMetrics(cfg *config.Config) {
+	// 初始化指标
+	metrics.Init("go-bisub")
+	slog.Info("Metrics system initialized")
 }
 
 // RegisterRoutes registers all routes
@@ -193,6 +245,9 @@ func RegisterRoutes(
 	engine.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+	
+	// Metrics endpoint
+	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// API routes (需要 JWT 认证)
 	v1 := engine.Group("/v1")

@@ -40,6 +40,7 @@ make dev
   - [使用 Docker Compose](#使用docker-compose推荐)
   - [本地开发](#本地开发)
 - [常用开发命令](#常用开发命令)
+- [日志系统](#日志系统)
 - [API文档](#api文档)
 - [项目启动流程](#项目启动流程)
 - [故障排查](#故障排查)
@@ -145,7 +146,114 @@ go run cmd/server/main.go  # 直接运行
   export PATH="$PATH:$(go env GOPATH)/bin"
   ```
 
-### 常用开发命令
+### 日志和监控系统
+
+项目采用 **slog + zap** 架构，实现了完整的结构化日志和 Prometheus 指标采集，遵循 Uhomes 微服务规范。
+
+### 日志系统
+
+#### 结构化日志
+
+```go
+import "git.uhomes.net/uhs-go/go-bisub/internal/pkg/logger"
+
+// 基础日志
+logger.Info("用户创建成功",
+    "user_id", "usr_123",
+    "operator", "admin@uhomes.com",
+    "duration", 150,
+)
+
+// 带上下文的日志（自动包含 trace_id, request_id）
+logger.InfoContext(ctx, "订阅执行完成",
+    "subscription_key", "daily_report",
+    "rows_affected", 1000,
+)
+```
+
+#### 日志文件
+
+日志文件位于 `./logs/` 目录，按日期自动分割：
+
+- **API日志**: `YYMMDD.log` (例如: `251128.log`)
+- **SQL日志**: `YYMMDD_sql.log` (例如: `251128_sql.log`)
+
+#### 查看日志
+
+```bash
+# 查看今天的API日志
+./scripts/view_logs.sh
+
+# 查看今天的SQL日志
+./scripts/view_logs.sh -t sql
+
+# 实时跟踪日志
+./scripts/view_logs.sh -f
+
+# 查看错误日志
+./scripts/view_logs.sh -e
+
+# 查看慢查询
+./scripts/view_logs.sh -t sql -s
+
+# 显示统计信息
+./scripts/view_logs.sh --stats
+```
+
+### 指标监控
+
+#### Prometheus 指标
+
+访问 `http://localhost:8080/metrics` 查看所有指标。
+
+核心指标：
+- **请求速率**: `http_requests_total`
+- **请求延迟**: `http_request_duration_seconds`
+- **错误率**: `http_requests_total{status=~"5.."}`
+- **数据库查询**: `db_query_duration_seconds`
+- **慢查询**: `db_slow_queries_total`
+- **连接池**: `db_connections`
+
+#### 查询示例
+
+```promql
+# QPS
+rate(http_requests_total{service="go-bisub"}[5m])
+
+# 错误率
+sum(rate(http_requests_total{service="go-bisub",status=~"5.."}[5m]))
+/
+sum(rate(http_requests_total{service="go-bisub"}[5m]))
+
+# P95 延迟
+histogram_quantile(0.95,
+  sum(rate(http_request_duration_seconds_bucket{service="go-bisub"}[5m])) by (le)
+)
+```
+
+### 告警规则
+
+项目包含完整的 Prometheus 告警规则：
+
+**严重告警**:
+- 错误率 > 5% 持续 5 分钟
+- P99 延迟 > 1s 持续 5 分钟
+- 服务可用性 < 99.9%
+- 数据库连接池耗尽
+
+**警告告警**:
+- 错误率 > 1% 持续 10 分钟
+- P95 延迟 > 500ms 持续 10 分钟
+- 内存使用 > 80%
+- 磁盘使用 > 85%
+
+详细文档:
+- [监控标准规范](docs/MONITORING_STANDARDS.md)
+- [日志系统架构](docs/LOGGING_ARCHITECTURE.md)
+- [使用示例](docs/LOGGING_METRICS_EXAMPLES.md)
+- [Prometheus 告警规则](docs/prometheus-alerts.yml)
+
+## 常用开发命令
 
 #### 启动相关
 ```bash
