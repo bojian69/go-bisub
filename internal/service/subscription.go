@@ -67,18 +67,20 @@ func (s *SubscriptionService) ExecuteSubscription(ctx context.Context, subType, 
 	var err error
 
 	if version != nil {
+		// 如果指定了版本，直接获取该版本（允许执行已失效的订阅，用于验证）
 		subscription, err = s.repo.GetByKeyAndVersion(ctx, subType, key, *version)
-		if err != nil || subscription.Status == models.StatusExpired {
-			// 如果指定版本不存在或已失效，获取活跃的最高版本
-			subscription, err = s.repo.GetActiveByKey(ctx, subType, key)
+		if err != nil {
+			return nil, fmt.Errorf("subscription not found: %w", err)
 		}
 	} else {
+		// 如果没有指定版本，获取活跃的最高版本
 		subscription, err = s.repo.GetActiveByKey(ctx, subType, key)
+		if err != nil {
+			return nil, fmt.Errorf("no active subscription found: %w", err)
+		}
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("subscription not found: %w", err)
-	}
+	// 注意：允许执行任何状态的订阅，包括已失效的订阅（用于状态变更前的验证）
 
 	// 解析extra_config
 	var extraConfig models.ExtraConfig
@@ -324,6 +326,34 @@ func (s *SubscriptionService) UpdateSubscription(ctx context.Context, subType, k
 }
 
 func (s *SubscriptionService) UpdateStatus(ctx context.Context, subType, key string, version uint8, status string) error {
+	// 验证目标状态是否有效
+	validStatuses := map[string]bool{
+		models.StatusPending:               true, // A
+		models.StatusActive:                true, // B
+		models.StatusActiveForceCompatible: true, // C
+		models.StatusExpired:               true, // D
+	}
+	if !validStatuses[status] {
+		return fmt.Errorf("invalid status: %s", status)
+	}
+
+	// 获取当前订阅信息
+	currentSub, err := s.repo.GetByKeyAndVersion(ctx, subType, key, version)
+	if err != nil {
+		return fmt.Errorf("subscription not found: %w", err)
+	}
+
+	// 检查是否为相同状态
+	if currentSub.Status == status {
+		return fmt.Errorf("subscription is already in status: %s", status)
+	}
+
+	// 状态转换规则验证
+	// 注意：从 A(待生效) 或 D(已失效) 变更为 B(生效中) 或 C(强制兼容) 时
+	// 前端应该先调用执行接口验证 SQL，这里只做基本的状态转换检查
+	// 实际的 SQL 验证由前端在调用此接口前完成
+
+	// 执行状态更新
 	return s.repo.UpdateStatus(ctx, subType, key, version, status)
 }
 

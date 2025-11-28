@@ -23,6 +23,21 @@
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
         }
+
+        .verification-param.is-invalid {
+            border-color: #dc3545;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(.375em + .1875rem) center;
+            background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+            padding-right: calc(1.5em + .75rem);
+        }
+
+        #verificationParamsSection {
+            border-left: 3px solid #ffc107;
+            padding-left: 1rem;
+            margin-left: -1rem;
+        }
     </style>
 </head>
 
@@ -272,6 +287,79 @@
         </div>
     </div>
 
+    <!-- 状态变更模态框 -->
+    <div class="modal fade" id="statusChangeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">变更订阅状态</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">订阅信息</label>
+                        <div id="statusChangeInfo" class="alert alert-info"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">当前状态</label>
+                        <div id="currentStatus" class="mb-2"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">目标状态 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="targetStatus">
+                            <option value="">请选择目标状态</option>
+                            <option value="A">待生效</option>
+                            <option value="B">生效中</option>
+                            <option value="C">生效中-强制兼容低版本</option>
+                            <option value="D">已失效</option>
+                        </select>
+                        <div class="form-text text-warning" id="statusChangeWarning" style="display:none;"></div>
+                    </div>
+
+                    <div class="alert alert-warning" id="executionRequiredAlert" style="display:none;">
+                        <strong>⚠️ 注意：</strong>从"待生效"或"已失效"状态变更为"生效中"或"生效中-强制兼容低版本"时，需要先执行一次订阅以验证 SQL 是否正常。
+                    </div>
+
+                    <!-- 验证参数输入区域 -->
+                    <div id="verificationParamsSection" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">验证参数</label>
+                            <div class="alert alert-info py-2 mb-2">
+                                <small>请填写以下参数以验证 SQL 是否可以正常执行</small>
+                            </div>
+                            <div id="verificationParamsList" class="row g-3">
+                                <!-- 参数输入框将动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="executionStatus" style="display:none;">
+                        <div class="alert alert-success">
+                            <strong>✅ SQL 验证通过</strong>
+                            <div class="small mt-1">最后执行时间: <span id="lastExecutionTime"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-warning" id="executeBeforeChangeBtn" style="display:none;"
+                        onclick="executeBeforeStatusChange()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-play-fill me-1" viewBox="0 0 16 16">
+                            <path
+                                d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
+                        </svg>
+                        先执行验证
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn"
+                        onclick="confirmStatusChange()">确认变更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 执行订阅模态框 -->
     <div class="modal fade" id="executeModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
@@ -362,6 +450,8 @@
         let currentPage = 1;
         let currentLimit = 20;
         let executeContext = {};
+        let statusChangeContext = {};
+        let sqlExecutionVerified = false;
 
         // 变量管理
         let variables = [];
@@ -403,11 +493,11 @@
 
                 renderVariables();
 
-                if (newCount > 0) {
-                    showSuccess(`成功提取 ${newCount} 个新变量，请为每个变量添加说明`);
-                } else {
-                    showSuccess('所有变量已存在');
-                }
+                // if (newCount > 0) {
+                //     showSuccess(`成功提取 ${newCount} 个新变量，请为每个变量添加说明`);
+                // } else {
+                //     showSuccess('所有变量已存在');
+                // }
             } else {
                 showError('未找到 xxx_replace 格式的变量');
             }
@@ -536,12 +626,12 @@
                             </svg>
                             <span class="d-none d-lg-inline ms-1">查看</span>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubscription('${sub.sub_key}', ${sub.version}, '${sub.type}')" title="删除">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        <button class="btn btn-sm btn-outline-warning" onclick='showStatusChangeModal(${JSON.stringify(sub).replace(/'/g, "&#39;")})' title="变更状态">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+                                <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+                                <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
                             </svg>
-                            <span class="d-none d-lg-inline ms-1">删除</span>
+                            <span class="d-none d-lg-inline ms-1">状态</span>
                         </button>
                     </td>
                 </tr>
@@ -742,21 +832,21 @@
                 const paramValue = input.value.trim();
 
                 if (paramValue) {
-                    // 替换SQL中的占位符
-                    const regex = new RegExp(`'${paramName}'`, 'g');
-                    previewSql = previewSql.replace(regex, `'${paramValue}'`);
+                    // 替换SQL中的占位符（不带引号）
+                    const regex = new RegExp(paramName, 'g');
+                    previewSql = previewSql.replace(regex, paramValue);
                 } else {
                     // 如果没有输入值，保持占位符但高亮显示
-                    const regex = new RegExp(`'${paramName}'`, 'g');
-                    previewSql = previewSql.replace(regex, `'<span style="background-color: #fff3cd; color: #856404;">${paramName}</span>'`);
+                    const regex = new RegExp(`(${paramName})`, 'g');
+                    previewSql = previewSql.replace(regex, `<span style="background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px;">$1</span>`);
                 }
             });
 
             // 如果没有输入框（首次加载），高亮所有占位符
             if (document.querySelectorAll('.execute-param').length === 0) {
                 Object.keys(sqlReplace).forEach(paramName => {
-                    const regex = new RegExp(`'${paramName}'`, 'g');
-                    previewSql = previewSql.replace(regex, `'<span style="background-color: #fff3cd; color: #856404;">${paramName}</span>'`);
+                    const regex = new RegExp(`(${paramName})`, 'g');
+                    previewSql = previewSql.replace(regex, `<span style="background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px;">$1</span>`);
                 });
             }
 
@@ -820,27 +910,227 @@
             alert(`订阅详情:\n\nKey: ${sub.sub_key}\n版本: ${sub.version}\n标题: ${sub.title}\n描述: ${sub.abstract || '无'}\n状态: ${getStatusText(sub.status)}`);
         }
 
-        // 删除订阅
-        async function deleteSubscription(subKey, version, type) {
-            if (!confirm(`确定要删除订阅 ${subKey} 版本 ${version} 吗？`)) {
+        // 显示状态变更模态框
+        function showStatusChangeModal(sub) {
+            statusChangeContext = sub;
+            sqlExecutionVerified = false;
+
+            document.getElementById('statusChangeInfo').innerHTML = `
+                <strong>订阅Key:</strong> ${sub.sub_key}<br>
+                <strong>版本:</strong> v${sub.version}<br>
+                <strong>标题:</strong> ${sub.title}
+            `;
+
+            document.getElementById('currentStatus').innerHTML = `
+                <span class="badge ${getStatusBadgeClass(sub.status)} fs-6">${getStatusText(sub.status)}</span>
+            `;
+
+            // 重置选择
+            document.getElementById('targetStatus').value = '';
+            document.getElementById('statusChangeWarning').style.display = 'none';
+            document.getElementById('executionRequiredAlert').style.display = 'none';
+            document.getElementById('executionStatus').style.display = 'none';
+            document.getElementById('executeBeforeChangeBtn').style.display = 'none';
+            document.getElementById('verificationParamsSection').style.display = 'none';
+            document.getElementById('confirmStatusChangeBtn').disabled = false;
+
+            // 监听目标状态变化
+            document.getElementById('targetStatus').onchange = function () {
+                checkStatusChangeRequirement(sub.status, this.value);
+            };
+
+            new bootstrap.Modal(document.getElementById('statusChangeModal')).show();
+        }
+
+        // 渲染验证参数输入框
+        function renderVerificationParams(sub) {
+            const container = document.getElementById('verificationParamsList');
+            const sqlReplace = sub.extra_config?.sql_replace || {};
+
+            if (Object.keys(sqlReplace).length === 0) {
+                container.innerHTML = '<div class="col-12"><div class="alert alert-warning">该订阅没有定义参数</div></div>';
+                return;
+            }
+
+            let html = '';
+            Object.entries(sqlReplace).forEach(([key, description]) => {
+                html += `
+                    <div class="col-md-6 col-12">
+                        <label class="form-label">
+                            <code class="text-primary">${key}</code>
+                            <small class="text-muted ms-2">${description}</small>
+                        </label>
+                        <input type="text" 
+                               class="form-control verification-param" 
+                               data-param="${key}"
+                               placeholder="请输入${description}">
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 检查状态变更要求
+        function checkStatusChangeRequirement(currentStatus, targetStatus) {
+            const warningEl = document.getElementById('statusChangeWarning');
+            const alertEl = document.getElementById('executionRequiredAlert');
+            const executeBtnEl = document.getElementById('executeBeforeChangeBtn');
+            const confirmBtnEl = document.getElementById('confirmStatusChangeBtn');
+            const executionStatusEl = document.getElementById('executionStatus');
+            const verificationParamsEl = document.getElementById('verificationParamsSection');
+
+            // 重置
+            warningEl.style.display = 'none';
+            alertEl.style.display = 'none';
+            executeBtnEl.style.display = 'none';
+            executionStatusEl.style.display = 'none';
+            verificationParamsEl.style.display = 'none';
+            confirmBtnEl.disabled = false;
+
+            if (!targetStatus) {
+                return;
+            }
+
+            // 相同状态
+            if (currentStatus === targetStatus) {
+                warningEl.textContent = '⚠️ 目标状态与当前状态相同';
+                warningEl.style.display = 'block';
+                confirmBtnEl.disabled = true;
+                return;
+            }
+
+            // 从 A(待生效) 或 D(已失效) 变更为 B(生效中) 或 C(生效中-强制兼容低版本)
+            if ((currentStatus === 'A' || currentStatus === 'D') && (targetStatus === 'B' || targetStatus === 'C')) {
+                alertEl.style.display = 'block';
+
+                if (!sqlExecutionVerified) {
+                    // 显示参数输入区域
+                    verificationParamsEl.style.display = 'block';
+                    renderVerificationParams(statusChangeContext);
+                    executeBtnEl.style.display = 'inline-block';
+                    confirmBtnEl.disabled = true;
+                    warningEl.textContent = '⚠️ 请先填写参数并执行验证';
+                    warningEl.style.display = 'block';
+                }
+            }
+        }
+
+        // 执行验证（状态变更前）
+        async function executeBeforeStatusChange() {
+            const sub = statusChangeContext;
+            const sqlReplace = sub.extra_config?.sql_replace || {};
+
+            // 检查是否有参数
+            if (Object.keys(sqlReplace).length === 0) {
+                showError('该订阅没有定义参数，无法执行验证');
+                return;
+            }
+
+            // 从输入框收集参数
+            const params = {};
+            let hasEmptyParam = false;
+
+            document.querySelectorAll('.verification-param').forEach(input => {
+                const paramName = input.dataset.param;
+                const paramValue = input.value.trim();
+
+                if (!paramValue) {
+                    hasEmptyParam = true;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                    params[paramName] = paramValue;
+                }
+            });
+
+            if (hasEmptyParam) {
+                showError('请填写所有必填参数');
+                return;
+            }
+
+            // 禁用按钮，显示加载状态
+            const executeBtn = document.getElementById('executeBeforeChangeBtn');
+            const originalText = executeBtn.innerHTML;
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>验证中...';
+
+            try {
+                const url = `${API_BASE}/subscriptions/${sub.sub_key}/versions/${sub.version}/execute?type=${sub.type}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ variables: params, timeout: 30000 })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 'OK') {
+                    sqlExecutionVerified = true;
+                    document.getElementById('executionStatus').style.display = 'block';
+                    document.getElementById('lastExecutionTime').textContent = new Date().toLocaleString('zh-CN');
+                    document.getElementById('confirmStatusChangeBtn').disabled = false;
+                    document.getElementById('statusChangeWarning').style.display = 'none';
+                    document.getElementById('verificationParamsSection').style.display = 'none';
+                    executeBtn.style.display = 'none';
+                    showSuccess('SQL 验证通过！');
+                } else {
+                    showError('SQL 执行失败: ' + result.message);
+                    executeBtn.disabled = false;
+                    executeBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Execute verification error:', error);
+                showError('执行验证失败: ' + error.message);
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = originalText;
+            }
+        }
+
+        // 确认状态变更
+        async function confirmStatusChange() {
+            const targetStatus = document.getElementById('targetStatus').value;
+
+            if (!targetStatus) {
+                showError('请选择目标状态');
+                return;
+            }
+
+            const sub = statusChangeContext;
+            const currentStatus = sub.status;
+
+            // 再次检查是否需要验证
+            if ((currentStatus === 'A' || currentStatus === 'D') && (targetStatus === 'B' || targetStatus === 'C')) {
+                if (!sqlExecutionVerified) {
+                    showError('请先执行验证 SQL');
+                    return;
+                }
+            }
+
+            if (!confirm(`确定要将状态从"${getStatusText(currentStatus)}"变更为"${getStatusText(targetStatus)}"吗？`)) {
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE}/subscriptions/${subKey}/versions/${version}?type=${type}`, {
-                    method: 'DELETE'
+                const url = `${API_BASE}/subscriptions/${sub.sub_key}/versions/${sub.version}/status?type=${sub.type}`;
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: targetStatus })
                 });
 
                 const result = await response.json();
+
                 if (result.code === 'OK') {
-                    showSuccess('删除成功！');
+                    showSuccess('状态变更成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('statusChangeModal')).hide();
                     loadSubscriptions(currentPage);
                 } else {
-                    showError('删除失败: ' + result.message);
+                    showError('状态变更失败: ' + result.message);
                 }
             } catch (error) {
-                console.error('Delete subscription error:', error);
-                showError('删除失败: ' + error.message);
+                console.error('Status change error:', error);
+                showError('状态变更失败: ' + error.message);
             }
         }
 

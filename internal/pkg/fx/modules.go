@@ -293,6 +293,7 @@ func RegisterRoutes(
 		api.GET("/subscriptions/:key/versions/:version", subscriptionHandler.GetSubscription)
 		api.PUT("/subscriptions/:key/versions/:version", subscriptionHandler.UpdateSubscription)
 		api.PATCH("/subscriptions/:key/versions/:version/status", subscriptionHandler.UpdateSubscriptionStatus)
+		api.PUT("/subscriptions/:key/versions/:version/status", subscriptionHandler.UpdateSubscriptionStatus)
 		api.DELETE("/subscriptions/:key/versions/:version", subscriptionHandler.DeleteSubscription)
 
 		// Execution
