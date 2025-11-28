@@ -86,6 +86,6 @@ VALUES
 	('756098401183076352', 'SUBSCRIPTION_TYPE', 'A', '分析数据', 'analysis data', '0'),
 	('756098401686392832', 'SUBSCRIPTION_STATUS', 'A', '待生效', 'pending', '1'),
 	('756098402231652352', 'SUBSCRIPTION_STATUS', 'B', '生效中', 'activating', '2'),
-	('756098402768523264', 'SUBSCRIPTION_STATUS', 'C', '生效中（强制兼容低版本）', 'activating force compatible', '3'),
+	('756098402768523264', 'SUBSCRIPTION_STATUS', 'C', '生效中-强制兼容低版本', 'activating force compatible', '3'),
 	('756098403276034048', 'SUBSCRIPTION_STATUS', 'D', '已失效', 'expired', '4');
 

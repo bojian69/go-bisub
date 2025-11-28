@@ -2,7 +2,7 @@
 
 // API 配置
 const API_CONFIG = {
-    baseURL: '/v1',
+    baseURL: '/api',
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json'

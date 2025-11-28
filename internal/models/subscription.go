@@ -3,13 +3,16 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"git.uhomes.net/uhs-go/go-bisub/internal/utils"
+	"gorm.io/gorm"
 )
 
 // SubscriptionStatus 订阅状态
 const (
 	StatusPending               = "A" // 待生效
 	StatusActive                = "B" // 生效中
-	StatusActiveForceCompatible = "C" // 生效中（强制兼容低版本）
+	StatusActiveForceCompatible = "C" // 生效中-强制兼容低版本
 	StatusExpired               = "D" // 已失效
 )
 
@@ -44,6 +47,14 @@ func (Subscription) TableName() string {
 	return "sub_subscription_theme"
 }
 
+// BeforeCreate GORM钩子，创建前生成分布式ID
+func (s *Subscription) BeforeCreate(tx *gorm.DB) error {
+	if s.ID == 0 {
+		s.ID = uint64(utils.GenerateID())
+	}
+	return nil
+}
+
 // RequestResponse 请求响应详情
 type RequestResponse struct {
 	Params         interface{} `json:"params"`          // 请求参数
@@ -68,6 +79,14 @@ type SubscriptionStats struct {
 
 func (SubscriptionStats) TableName() string {
 	return "sub_logs_bidata_response"
+}
+
+// BeforeCreate GORM钩子，创建前生成分布式ID
+func (s *SubscriptionStats) BeforeCreate(tx *gorm.DB) error {
+	if s.ID == 0 {
+		s.ID = uint64(utils.GenerateID())
+	}
+	return nil
 }
 
 // CreateSubscriptionRequest 创建订阅请求

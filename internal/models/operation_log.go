@@ -3,6 +3,9 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"git.uhomes.net/uhs-go/go-bisub/internal/utils"
+	"gorm.io/gorm"
 )
 
 // OperationType 操作类型
@@ -45,6 +48,14 @@ type OperationLog struct {
 
 func (OperationLog) TableName() string {
 	return "sub_logs_operation"
+}
+
+// BeforeCreate GORM钩子，创建前生成分布式ID
+func (o *OperationLog) BeforeCreate(tx *gorm.DB) error {
+	if o.ID == 0 {
+		o.ID = uint64(utils.GenerateID())
+	}
+	return nil
 }
 
 // OperationLogRequest 操作日志查询请求

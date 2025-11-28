@@ -58,7 +58,7 @@
                             <option value="">全部状态</option>
                             <option value="A">待生效</option>
                             <option value="B">生效中</option>
-                            <option value="C">强制兼容</option>
+                            <option value="C">生效中-强制兼容低版本</option>
                             <option value="D">已失效</option>
                         </select>
                     </div>
@@ -136,7 +136,7 @@
                                     <label class="form-label">类型 <span class="text-danger">*</span></label>
                                     <select class="form-select" name="type" required>
                                         <option value="A" selected>分析数据</option>
-                                        <option value="B">业务数据</option>
+                                        <option value="B">营销推送</option>
                                     </select>
                                 </div>
                             </div>
@@ -154,16 +154,32 @@
 
                         <div class="mb-3">
                             <label class="form-label">SQL内容 <span class="text-danger">*</span></label>
-                            <textarea class="form-control code-editor" name="sql_content" rows="8" required
-                                placeholder="SELECT * FROM table WHERE id = {{id}}"></textarea>
-                            <div class="form-text">使用 {{variable_name}} 作为变量占位符</div>
+                            <textarea class="form-control code-editor" name="sql_content" rows="10" required
+                                placeholder="SELECT house_id, count(distinct device_id) as number&#10;FROM uhomes_stat.stat_demand_log_events&#10;where ts_time between 'start_at_replace' and 'end_at_replace'&#10;and house_id in (house_id_replace)&#10;group by house_id"></textarea>
+                            <div class="form-text text-danger fw-bold">
+                                ⚠️ 重要：使用 <code>xxx_replace</code> 格式作为变量占位符（如：start_at_replace, house_id_replace）
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">SQL变量说明 (JSON格式)</label>
-                            <textarea class="form-control code-editor" name="sql_replace" rows="4"
-                                placeholder='{"id": "用户ID", "date": "查询日期"}'></textarea>
-                            <div class="form-text">定义SQL中使用的变量及其说明</div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">SQL变量说明</label>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-primary" onclick="extractVariablesFromSQL()">
+                                        🔍 提取变量
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="addVariable()">
+                                        + 添加变量
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-2 py-2">
+                                <small>从 SQL 内容中提取 <code>xxx_replace</code> 格式的变量，为每个变量添加说明</small>
+                            </div>
+                            <div id="variablesList" class="mb-2">
+                                <div class="text-muted small">暂无变量，点击"提取变量"或"添加变量"</div>
+                            </div>
+                            <input type="hidden" name="sql_replace" id="sql_replace_hidden">
                         </div>
 
                         <div class="row">
@@ -176,13 +192,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">状态 <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="status" required>
-                                        <option value="A">待生效</option>
-                                        <option value="B" selected>生效中</option>
-                                        <option value="C">强制兼容低版本</option>
-                                        <option value="D">已失效</option>
-                                    </select>
+                                    <label class="form-label">状态</label>
+                                    <input type="text" class="form-control" value="待生效" disabled>
+                                    <div class="form-text text-muted">新创建的订阅默认为"待生效"状态</div>
                                 </div>
                             </div>
                         </div>
@@ -233,15 +245,119 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const API_BASE = '/v1';
+        const API_BASE = '/api';
         let currentPage = 1;
         let currentLimit = 20;
         let executeContext = {};
 
+        // 变量管理
+        let variables = [];
+
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function () {
             loadSubscriptions();
+
+            // 监听 SQL 内容变化，自动提取变量
+            const sqlContent = document.querySelector('textarea[name="sql_content"]');
+            if (sqlContent) {
+                sqlContent.addEventListener('blur', extractVariablesFromSQL);
+            }
         });
+
+        // 从 SQL 中提取变量
+        function extractVariablesFromSQL() {
+            const sqlContent = document.querySelector('textarea[name="sql_content"]').value;
+
+            if (!sqlContent.trim()) {
+                showError('请先输入 SQL 内容');
+                return;
+            }
+
+            const regex = /(\w+_replace)/g;
+            const matches = sqlContent.match(regex);
+
+            if (matches) {
+                const uniqueVars = [...new Set(matches)];
+                let newCount = 0;
+
+                // 只添加新变量
+                uniqueVars.forEach(varName => {
+                    if (!variables.find(v => v.name === varName)) {
+                        variables.push({ name: varName, description: '' });
+                        newCount++;
+                    }
+                });
+
+                renderVariables();
+
+                if (newCount > 0) {
+                    showSuccess(`成功提取 ${newCount} 个新变量，请为每个变量添加说明`);
+                } else {
+                    showSuccess('所有变量已存在');
+                }
+            } else {
+                showError('未找到 xxx_replace 格式的变量');
+            }
+        }
+
+        // 添加变量
+        function addVariable() {
+            const varName = prompt('请输入变量名（格式：xxx_replace）：');
+            if (varName) {
+                if (!varName.endsWith('_replace')) {
+                    showError('变量名必须以 _replace 结尾');
+                    return;
+                }
+                if (variables.find(v => v.name === varName)) {
+                    showError('变量已存在');
+                    return;
+                }
+                variables.push({ name: varName, description: '' });
+                renderVariables();
+            }
+        }
+
+        // 删除变量
+        function removeVariable(index) {
+            variables.splice(index, 1);
+            renderVariables();
+        }
+
+        // 渲染变量列表
+        function renderVariables() {
+            const container = document.getElementById('variablesList');
+            if (variables.length === 0) {
+                container.innerHTML = '<div class="text-muted small">暂无变量，点击"提取变量"或"添加变量"</div>';
+                return;
+            }
+
+            container.innerHTML = variables.map((v, index) => `
+                <div class="input-group mb-2">
+                    <span class="input-group-text bg-light" style="min-width: 150px;">
+                        <code class="text-primary">${v.name}</code>
+                    </span>
+                    <input type="text" 
+                           class="form-control ${!v.description || !v.description.trim() ? 'border-danger' : ''}" 
+                           placeholder="变量说明（必填，如：开始时间）" 
+                           value="${v.description || ''}" 
+                           required
+                           onchange="variables[${index}].description = this.value; renderVariables()">
+                    <button class="btn btn-outline-danger" type="button" onclick="removeVariable(${index})" title="删除变量">
+                        ✕
+                    </button>
+                </div>
+            `).join('');
+
+            // 显示验证提示
+            const emptyVars = variables.filter(v => !v.description || !v.description.trim());
+            if (emptyVars.length > 0) {
+                container.innerHTML += `
+                    <div class="alert alert-warning mt-2 py-2" role="alert">
+                        <small>⚠️ 还有 ${emptyVars.length} 个变量未填写说明</small>
+                    </div>
+                `;
+            }
+        }
 
         // 加载订阅列表
         async function loadSubscriptions(page = 1) {
@@ -334,6 +450,54 @@
             const form = document.getElementById('createForm');
             const formData = new FormData(form);
 
+            // 从 SQL 中提取所有变量
+            const sqlContent = formData.get('sql_content');
+            const regex = /(\w+_replace)/g;
+            const sqlMatches = sqlContent.match(regex);
+            const sqlVariables = sqlMatches ? [...new Set(sqlMatches)] : [];
+
+            // 构建 SQL 变量对象（只包含有说明的变量）
+            const sqlReplace = {};
+            const variablesWithDesc = [];
+
+            variables.forEach(v => {
+                if (v.name && v.description && v.description.trim()) {
+                    sqlReplace[v.name] = v.description.trim();
+                    variablesWithDesc.push(v.name);
+                }
+            });
+
+            // 严格校验：SQL 中的变量必须都有说明
+            if (sqlVariables.length > 0) {
+                // 检查是否有变量没有说明
+                const missingDesc = variables.filter(v => v.name && (!v.description || !v.description.trim()));
+                if (missingDesc.length > 0) {
+                    showError(`以下变量缺少说明：${missingDesc.map(v => v.name).join(', ')}`);
+                    return;
+                }
+
+                // 检查 SQL 中的变量是否都在变量列表中
+                const missingVars = sqlVariables.filter(v => !variablesWithDesc.includes(v));
+                if (missingVars.length > 0) {
+                    showError(`SQL 中的以下变量未添加说明：${missingVars.join(', ')}\n请点击"提取变量"按钮`);
+                    return;
+                }
+
+                // 检查变量列表中是否有多余的变量（不在 SQL 中）
+                const extraVars = variablesWithDesc.filter(v => !sqlVariables.includes(v));
+                if (extraVars.length > 0) {
+                    if (!confirm(`变量列表中有不在 SQL 中的变量：${extraVars.join(', ')}\n是否继续提交？`)) {
+                        return;
+                    }
+                }
+
+                // 最终验证：确保至少有一个变量有说明
+                if (Object.keys(sqlReplace).length === 0) {
+                    showError('请为 SQL 中的变量添加说明');
+                    return;
+                }
+            }
+
             // 构建请求数据
             const data = {
                 type: formData.get('type'),
@@ -341,24 +505,14 @@
                 version: parseInt(formData.get('version')),
                 title: formData.get('title'),
                 abstract: formData.get('abstract') || '',
-                status: formData.get('status'),
+                status: 'A', // 固定为待生效状态
                 extra_config: {
                     sql_content: formData.get('sql_content'),
-                    sql_replace: {},
+                    sql_replace: sqlReplace,
                     db_source: formData.get('db_source') || 'default',
-                    example: '{}'
+                    example: JSON.stringify(sqlReplace)
                 }
             };
-
-            // 处理SQL变量
-            if (formData.get('sql_replace')) {
-                try {
-                    data.extra_config.sql_replace = JSON.parse(formData.get('sql_replace'));
-                } catch (e) {
-                    showError('SQL变量格式错误，请输入有效的JSON');
-                    return;
-                }
-            }
 
             try {
                 const response = await fetch(`${API_BASE}/subscriptions`, {
@@ -372,6 +526,8 @@
                     showSuccess('订阅创建成功！');
                     bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
                     form.reset();
+                    variables = []; // 清空变量列表
+                    renderVariables();
                     loadSubscriptions(currentPage);
                 } else {
                     showError('创建失败: ' + result.message);
@@ -476,7 +632,7 @@
         }
 
         function getStatusText(status) {
-            const map = { 'A': '待生效', 'B': '生效中', 'C': '强制兼容', 'D': '已失效' };
+            const map = { 'A': '待生效', 'B': '生效中', 'C': '生效中-强制兼容低版本', 'D': '已失效' };
             return map[status] || status;
         }
 

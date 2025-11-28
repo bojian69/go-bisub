@@ -1,6 +1,53 @@
-# go-bisub
+# go-sub
 
 GO BI Subscription 订阅BI数据服务
+
+> 🎯 **新手？** 从 [这里开始](docs/START_HERE.md) | 📚 [命令速查表](docs/COMMANDS.md)
+
+## 🚀 快速启动
+
+```bash
+# 1. 安装依赖
+make install-tools && make deps
+
+# 2. 配置数据库
+cp config.local.yaml config.yaml
+# 编辑 config.yaml 修改数据库密码
+
+# 3. 初始化数据库
+make db-init
+
+# 4. 启动服务
+make dev
+```
+
+访问：
+- **API**: http://localhost:8080
+- **管理界面**: http://localhost:8080/admin (admin/admin123)
+- **健康检查**: http://localhost:8080/health
+
+详细说明请查看 [快速开始](#快速开始) 章节。
+
+> 💡 **提示**: 查看 [命令速查表](docs/COMMANDS.md) 快速查找常用命令
+
+---
+
+## 📋 目录
+
+- [快速启动](#-快速启动)
+- [功能特性](#功能特性)
+- [快速开始](#快速开始)
+  - [使用 Docker Compose](#使用docker-compose推荐)
+  - [本地开发](#本地开发)
+- [常用开发命令](#常用开发命令)
+- [API文档](#api文档)
+- [项目启动流程](#项目启动流程)
+- [故障排查](#故障排查)
+- [配置说明](#配置说明)
+- [数据库表结构](#数据库表结构)
+- [部署](#部署)
+- [开发](#开发)
+- [文档](#文档)
 
 ## 功能特性
 
@@ -100,21 +147,50 @@ go run cmd/server/main.go  # 直接运行
 
 ### 常用开发命令
 
+#### 启动相关
 ```bash
-# 查看所有可用命令
-make help
+make dev                # 启动开发服务器（热重载，推荐）
+make start              # 快速启动（无热重载）
+bash scripts/dev.sh     # 使用脚本启动（自动检查依赖）
+go run cmd/server/main.go  # 直接运行
+```
 
-# 代码格式化和检查
-make check
+#### 数据库相关
+```bash
+make db-check           # 检查数据库连接
+make db-init            # 初始化数据库
+```
 
-# 运行测试
-make test
+#### 开发工具
+```bash
+make help               # 查看所有可用命令
+make check-env          # 检查开发环境
+make install-tools      # 安装开发工具
+make deps               # 下载依赖
+```
 
-# 构建应用
-make build
+#### 代码质量
+```bash
+make check              # 完整检查（格式化+检查+测试）
+make fmt                # 代码格式化
+make lint               # 代码检查
+make test               # 运行测试
+make test-coverage      # 生成测试覆盖率报告
+```
 
-# 查看应用健康状态
-make health
+#### 构建部署
+```bash
+make build              # 构建应用
+make build-all          # 构建所有平台版本
+make docker-build       # 构建 Docker 镜像
+make docker-compose-up  # 启动 Docker 服务
+```
+
+#### 其他
+```bash
+make health             # 查看应用健康状态
+make logs               # 查看应用日志
+make clean              # 清理构建文件
 ```
 
 ## API文档
@@ -282,7 +358,7 @@ web_ui:
 | version | TINYINT UNSIGNED | 版本号 |
 | title | VARCHAR(240) | 订阅标题 |
 | abstract | TINYTEXT | 订阅简介 |
-| status | CHAR(1) | 状态 A:待生效 B:生效中 C:强制兼容 D:已失效 |
+| status | CHAR(1) | 状态 A:待生效 B:生效中 C:生效中-强制兼容低版本 D:已失效 |
 | created_by | BIGINT UNSIGNED | 创建人ID |
 | extra_config | JSON | 扩展配置(sql_content,sql_replace,example) |
 
@@ -556,13 +632,99 @@ make security
 - **结构化日志**: JSON格式日志输出
 - **性能分析**: 内置pprof支持
 
+## 项目启动流程
+
+### 首次启动（本地开发）
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. 环境准备                                                  │
+│    make check-env                                           │
+│    make install-tools                                       │
+│    make deps                                                │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. 配置文件                                                  │
+│    cp config.local.yaml config.yaml                         │
+│    编辑 config.yaml（修改数据库密码等）                      │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. 数据库初始化                                              │
+│    make db-check    # 检查连接                              │
+│    make db-init     # 初始化数据库                          │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 4. 启动服务                                                  │
+│    make dev         # 热重载开发                            │
+│    或 bash scripts/dev.sh                                   │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 5. 访问服务                                                  │
+│    http://localhost:8080        - API                      │
+│    http://localhost:8080/admin  - 管理界面                  │
+│    http://localhost:8080/health - 健康检查                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 日常开发
+
+```bash
+# 1. 启动服务
+make dev
+
+# 2. 修改代码（Air 会自动重新编译）
+
+# 3. 测试 API
+curl http://localhost:8080/health
+
+# 4. 提交前检查
+make check
+make test
+```
+
+### 使用 Docker
+
+```bash
+# 1. 启动所有服务（包括数据库）
+docker-compose up -d
+
+# 2. 查看日志
+docker-compose logs -f go-bisub
+
+# 3. 停止服务
+docker-compose down
+```
+
+## 故障排查
+
+### 常见问题
+
+| 问题 | 解决方案 |
+|------|---------|
+| `air: command not found` | 运行 `make install-tools` |
+| `MySQL connection failed` | 检查 MySQL 是否启动，运行 `make db-check` |
+| `Redis connection failed` | 检查 Redis 是否启动 |
+| `Database not found` | 运行 `make db-init` 初始化数据库 |
+| `Port 8080 already in use` | 修改 `config.yaml` 中的端口或杀死占用进程 |
+
+详细故障排查请查看 [快速启动指南](docs/QUICKSTART.md) 和 [本地开发指南](docs/LOCAL_DEVELOPMENT.md)
+
 ## 文档
 
+### 快速参考
+- [新手入门](docs/START_HERE.md) - 从这里开始 🎯
+- [命令速查表](docs/COMMANDS.md) - 常用命令快速查找 ⭐
+- [快速启动指南](docs/QUICKSTART.md) - 详细的启动步骤和故障排查
+- [本地开发指南](docs/LOCAL_DEVELOPMENT.md) - 本地开发环境配置
+- [数据库迁移指南](docs/DATABASE_MIGRATION.md) - 数据库变更说明
+
+### 技术文档
 - [更新日志](docs/CHANGELOG.md)
 - [操作日志实现](docs/OPERATION_LOGS_IMPLEMENTATION.md)
-- [分布式ID规范](docs/distributed-id.md)
-- [代码规范](docs/code-standards.md)
-- [开发工作流程](docs/development-workflow.md)
 
 ## 许可证
 

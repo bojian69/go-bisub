@@ -57,6 +57,8 @@ coverage/
 .env.test.local
 .env.production.local
 
+config.yaml
+
 # Config files with sensitive data
 config.prod.yaml
 config.staging.yaml

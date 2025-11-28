@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Security SecurityConfig `mapstructure:"security"`
-	Logging  LoggingConfig  `mapstructure:"logging"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	WebUI    WebUIConfig    `mapstructure:"web_ui"`
+	Server    ServerConfig    `mapstructure:"server"`
+	Database  DatabaseConfig  `mapstructure:"database"`
+	Security  SecurityConfig  `mapstructure:"security"`
+	Logging   LoggingConfig   `mapstructure:"logging"`
+	Redis     RedisConfig     `mapstructure:"redis"`
+	WebUI     WebUIConfig     `mapstructure:"web_ui"`
+	Snowflake SnowflakeConfig `mapstructure:"snowflake"`
 }
 
 type ServerConfig struct {
@@ -57,6 +58,10 @@ type RedisConfig struct {
 type WebUIConfig struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+}
+
+type SnowflakeConfig struct {
+	NodeID int64 `mapstructure:"node_id"`
 }
 
 func Load() (*Config, error) {

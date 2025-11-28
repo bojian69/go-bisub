@@ -9,6 +9,7 @@ import (
 
 	"git.uhomes.net/uhs-go/go-bisub/internal/config"
 	fxmodules "git.uhomes.net/uhs-go/go-bisub/internal/pkg/fx"
+	"git.uhomes.net/uhs-go/go-bisub/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -24,10 +25,20 @@ func main() {
 		fxmodules.HandlerModule,
 		fxmodules.MiddlewareModule,
 		fxmodules.HTTPModule,
+		fx.Invoke(initSnowflake),
 		fx.Invoke(startServer),
 	)
 
 	app.Run()
+}
+
+// initSnowflake 初始化 Snowflake ID 生成器
+func initSnowflake(cfg *config.Config) error {
+	nodeID := int64(1) // 默认节点 ID
+	if cfg.Snowflake.NodeID > 0 {
+		nodeID = cfg.Snowflake.NodeID
+	}
+	return utils.InitSnowflake(nodeID)
 }
 
 func startServer(lc fx.Lifecycle, engine *gin.Engine, cfg *config.Config) {

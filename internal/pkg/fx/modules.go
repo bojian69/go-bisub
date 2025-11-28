@@ -194,7 +194,7 @@ func RegisterRoutes(
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	// API routes
+	// API routes (需要 JWT 认证)
 	v1 := engine.Group("/v1")
 	v1.Use(rateLimiter.RateLimit())
 	v1.Use(authMiddleware.JWTAuth())
@@ -221,6 +221,34 @@ func RegisterRoutes(
 
 		// Operation logs
 		v1.GET("/operation-logs", operationLogHandler.GetOperationLogs)
+	}
+
+	// Internal API for Web UI (使用 BasicAuth，与 Web UI 共享认证)
+	api := engine.Group("/api")
+	api.Use(authMiddleware.BasicAuth())
+	{
+		// Refs
+		api.GET("/refs/subscription-types", refsHandler.GetSubscriptionTypes)
+		api.GET("/refs/subscription-statuses", refsHandler.GetSubscriptionStatuses)
+
+		// Subscriptions
+		api.GET("/subscriptions", subscriptionHandler.GetSubscriptions)
+		api.POST("/subscriptions", subscriptionHandler.CreateSubscription)
+		api.GET("/subscriptions/:key", subscriptionHandler.GetSubscription)
+		api.GET("/subscriptions/:key/versions/:version", subscriptionHandler.GetSubscription)
+		api.PUT("/subscriptions/:key/versions/:version", subscriptionHandler.UpdateSubscription)
+		api.PATCH("/subscriptions/:key/versions/:version/status", subscriptionHandler.UpdateSubscriptionStatus)
+		api.DELETE("/subscriptions/:key/versions/:version", subscriptionHandler.DeleteSubscription)
+
+		// Execution
+		api.POST("/subscriptions/:key/execute", subscriptionHandler.ExecuteSubscription)
+		api.POST("/subscriptions/:key/versions/:version/execute", subscriptionHandler.ExecuteSubscription)
+
+		// Stats
+		api.GET("/subscriptions/stats", subscriptionHandler.GetStats)
+
+		// Operation logs
+		api.GET("/operation-logs", operationLogHandler.GetOperationLogs)
 	}
 
 	// Web UI

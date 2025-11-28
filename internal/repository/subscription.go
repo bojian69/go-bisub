@@ -24,7 +24,7 @@ func (r *SubscriptionRepository) Create(ctx context.Context, subscription *model
 		}
 	}()
 
-	// 如果状态为强制兼容，先将同key的低版本设为失效
+	// 如果状态为生效中-强制兼容低版本，先将同key的低版本设为失效
 	if subscription.Status == models.StatusActiveForceCompatible {
 		if err := tx.Model(&models.Subscription{}).
 			Where("type = ? AND sub_key = ? AND version < ? AND status IN (?, ?)",

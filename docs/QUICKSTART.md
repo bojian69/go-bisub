@@ -319,8 +319,9 @@ make profile-mem
 
 ## 下一步
 
-- 阅读 [README.md](README.md) 了解完整功能
-- 查看 [API 文档](docs/) 了解接口详情
+- 阅读 [README.md](../README.md) 了解完整功能
+- 查看 [命令速查表](COMMANDS.md) 快速查找命令
+- 查看 [本地开发指南](../LOCAL_DEVELOPMENT.md) 深入开发
 - 访问 Web 管理界面体验功能
 - 开始开发你的第一个订阅服务
 
@@ -328,5 +329,5 @@ make profile-mem
 
 - 查看所有 Make 命令: `make help`
 - 检查环境配置: `make check-env`
-- 查看项目文档: `docs/` 目录
+- 查看项目文档: [docs/](.) 目录
 - 提交 Issue 或 PR

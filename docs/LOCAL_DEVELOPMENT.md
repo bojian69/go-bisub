@@ -427,9 +427,10 @@ make clean
 
 ## 获取帮助
 
-- 查看 [README.md](README.md) 了解完整功能
-- 查看 [QUICKSTART.md](QUICKSTART.md) 快速开始
-- 查看 [docs/](docs/) 目录了解详细文档
+- 查看 [README.md](../README.md) 了解完整功能
+- 查看 [快速启动指南](QUICKSTART.md) 快速开始
+- 查看 [命令速查表](COMMANDS.md) 查找命令
+- 查看 [技术文档](./) 了解详细文档
 - 提交 Issue 或 PR
 
 ## 下一步

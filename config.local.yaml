@@ -27,6 +27,15 @@ database:
       max_idle_conns: 10
       max_open_conns: 100
       conn_max_lifetime: 3600s
+    dbcfg_adb_uhomes:
+      host: 127.0.0.1
+      port: 3306
+      database: uhomes
+      username: root
+      password: 
+      max_idle_conns: 10
+      max_open_conns: 100
+      conn_max_lifetime: 3600s
 
 redis:
   host: 127.0.0.1
