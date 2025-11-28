@@ -43,7 +43,7 @@ func initSnowflake(cfg *config.Config) error {
 
 func startServer(lc fx.Lifecycle, engine *gin.Engine, cfg *config.Config) {
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+		Addr:         fmt.Sprintf("0.0.0.0:%d", cfg.Server.Port),
 		Handler:      engine,
 		ReadTimeout:  cfg.Server.Timeout,
 		WriteTimeout: cfg.Server.Timeout,

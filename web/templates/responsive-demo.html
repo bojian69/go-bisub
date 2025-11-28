@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>响应式UI演示 - BI订阅管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/responsive.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/mobile-enhancements.css" rel="stylesheet">
+    <style>
+        .demo-section {
+            margin-bottom: 3rem;
+        }
+
+        .device-info {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+
+        .demo-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/admin">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-graph-up d-inline-block align-text-top me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z" />
+                </svg>
+                响应式UI演示
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/admin">首页</a>
+                    <a class="nav-link" href="/admin/subscriptions">订阅管理</a>
+                    <a class="nav-link" href="/admin/stats">统计报表</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 设备信息 -->
+    <div class="device-info d-none d-md-block" id="deviceInfo">
+        <div>设备类型: <span id="deviceType">-</span></div>
+        <div>屏幕尺寸: <span id="screenSize">-</span></div>
+        <div>视口尺寸: <span id="viewportSize">-</span></div>
+    </div>
+
+    <div class="container-fluid mt-4 has-mobile-toolbar">
+        <!-- 欢迎区域 -->
+        <div class="demo-card">
+            <h1 class="mb-3">🎨 响应式UI演示</h1>
+            <p class="lead mb-0">本页面展示了所有响应式组件和移动端优化效果</p>
+        </div>
+
+        <!-- 按钮演示 -->
+        <div class="demo-section">
+            <h3 class="mb-3">按钮组件</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-primary w-100">主要按钮</button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-secondary w-100">次要按钮</button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-success w-100">成功按钮</button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-danger w-100">危险按钮</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表单演示 -->
+        <div class="demo-section">
+            <h3 class="mb-3">表单组件</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6 col-12">
+                            <label class="form-label">文本输入</label>
+                            <input type="text" class="form-control" placeholder="请输入内容">
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <label class="form-label">下拉选择</label>
+                            <select class="form-select">
+                                <option>选项 1</option>
+                                <option>选项 2</option>
+                                <option>选项 3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <label class="form-label">日期选择</label>
+                            <input type="date" class="form-control">
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <label class="form-label">时间选择</label>
+                            <input type="datetime-local" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格演示 -->
+        <div class="demo-section">
+            <h3 class="mb-3">表格组件</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th class="hide-mobile">描述</th>
+                                    <th class="hide-mobile">创建时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>示例数据</td>
+                                    <td class="hide-mobile">这是一段描述文字</td>
+                                    <td class="hide-mobile">2024-11-28</td>
+                                    <td><span class="badge bg-success">正常</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-outline-primary">查看</button>
+                                            <button class="btn btn-sm btn-outline-danger">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>测试数据</td>
+                                    <td class="hide-mobile">另一段描述</td>
+                                    <td class="hide-mobile">2024-11-27</td>
+                                    <td><span class="badge bg-warning">待处理</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-outline-primary">查看</button>
+                                            <button class="btn btn-sm btn-outline-danger">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片演示 -->
+        <div class="demo-section">
+            <h3 class="mb-3">卡片组件</h3>
+            <div class="row g-3">
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="card stat-card">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">总数量</h6>
+                            <h3 class="text-primary">1,234</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="card stat-card">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">活跃数</h6>
+                            <h3 class="text-success">856</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="card stat-card">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">待处理</h6>
+                            <h3 class="text-warning">42</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 徽章演示 -->
+        <div class="demo-section">
+            <h3 class="mb-3">徽章组件</h3>
+            <div class="card">
+                <div class="card-body">
+                    <span class="badge bg-primary me-2 mb-2">主要</span>
+                    <span class="badge bg-secondary me-2 mb-2">次要</span>
+                    <span class="badge bg-success me-2 mb-2">成功</span>
+                    <span class="badge bg-danger me-2 mb-2">危险</span>
+                    <span class="badge bg-warning me-2 mb-2">警告</span>
+                    <span class="badge bg-info me-2 mb-2">信息</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试按钮 -->
+        <div class="demo-section">
+            <h3 class="mb-3">交互测试</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-primary w-100" onclick="showToast('success')">成功提示</button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-danger w-100" onclick="showToast('error')">错误提示</button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-warning w-100" onclick="showToast('warning')">警告提示</button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-info w-100" onclick="showToast('info')">信息提示</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移动端底部工具栏 -->
+    <div class="mobile-toolbar d-md-none">
+        <button class="btn btn-primary" onclick="showToast('info', '刷新成功')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+                <path
+                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+            </svg>
+            <span>刷新</span>
+        </button>
+        <a href="/admin/subscriptions" class="btn btn-outline-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list-task"
+                viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5H2zM3 3H2v1h1V3z" />
+                <path
+                    d="M5 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9z" />
+            </svg>
+            <span>订阅</span>
+        </a>
+        <a href="/admin/stats" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bar-chart"
+                viewBox="0 0 16 16">
+                <path
+                    d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z" />
+            </svg>
+            <span>统计</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script>
+        // 更新设备信息
+        function updateDeviceInfo() {
+            const deviceType = DeviceDetector.getDeviceType();
+            const screenSize = DeviceDetector.getScreenSize();
+
+            document.getElementById('deviceType').textContent = deviceType;
+            document.getElementById('screenSize').textContent = `${screen.width}x${screen.height}`;
+            document.getElementById('viewportSize').textContent = `${screenSize.width}x${screenSize.height}`;
+        }
+
+        // 显示Toast
+        function showToast(type, message) {
+            const messages = {
+                success: message || '操作成功！',
+                error: message || '操作失败！',
+                warning: message || '请注意！',
+                info: message || '这是一条信息'
+            };
+
+            Toast.show(messages[type], type);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDeviceInfo();
+            window.addEventListener('resize', updateDeviceInfo);
+
+            // 显示欢迎消息
+            setTimeout(() => {
+                Toast.success('欢迎使用响应式UI演示！');
+            }, 500);
+        });
+    </script>
+</body>
+
+</html>

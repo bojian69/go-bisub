@@ -2,6 +2,7 @@
 # 复制此文件为 config.yaml 并根据实际情况修改
 
 server:
+  host: 0.0.0.0  # 监听所有网络接口，允许外部访问
   port: 8080
   timeout: 120s
   rate_limit: 1000

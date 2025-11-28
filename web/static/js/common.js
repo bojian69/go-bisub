@@ -322,3 +322,193 @@ window.Confirm = Confirm;
 window.Loading = Loading;
 window.TableHelper = TableHelper;
 window.Pagination = Pagination;
+
+// 移动端检测
+class DeviceDetector {
+    static isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    static isTablet() {
+        return /iPad|Android/i.test(navigator.userAgent) && window.innerWidth >= 768;
+    }
+
+    static isDesktop() {
+        return !this.isMobile() && !this.isTablet();
+    }
+
+    static getDeviceType() {
+        if (this.isMobile()) return 'mobile';
+        if (this.isTablet()) return 'tablet';
+        return 'desktop';
+    }
+
+    static getScreenSize() {
+        return {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+    }
+}
+
+// 响应式工具
+class ResponsiveHelper {
+    static init() {
+        // 添加设备类型到 body
+        document.body.classList.add(`device-${DeviceDetector.getDeviceType()}`);
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', this.handleResize.bind(this));
+
+        // 初始化移动端工具栏
+        if (DeviceDetector.isMobile()) {
+            document.body.classList.add('has-mobile-toolbar');
+        }
+    }
+
+    static handleResize() {
+        const deviceType = DeviceDetector.getDeviceType();
+        document.body.className = document.body.className.replace(/device-\w+/, `device-${deviceType}`);
+    }
+
+    static optimizeTableForMobile() {
+        if (!DeviceDetector.isMobile()) return;
+
+        const tables = document.querySelectorAll('.table-responsive');
+        tables.forEach(table => {
+            // 添加触摸滚动提示
+            if (!table.querySelector('.scroll-hint')) {
+                const hint = document.createElement('div');
+                hint.className = 'scroll-hint text-muted small text-center py-2';
+                hint.innerHTML = '← 左右滑动查看更多 →';
+                table.parentNode.insertBefore(hint, table);
+            }
+        });
+    }
+
+    static addPullToRefresh(callback) {
+        if (!DeviceDetector.isMobile()) return;
+
+        let startY = 0;
+        let isPulling = false;
+
+        document.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                startY = e.touches[0].pageY;
+                isPulling = true;
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+
+            const currentY = e.touches[0].pageY;
+            const diff = currentY - startY;
+
+            if (diff > 100) {
+                isPulling = false;
+                if (callback) callback();
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            isPulling = false;
+        });
+    }
+}
+
+// 触摸手势支持
+class TouchGestures {
+    static enableSwipe(element, onSwipeLeft, onSwipeRight) {
+        if (!DeviceDetector.isMobile()) return;
+
+        let startX = 0;
+        let startY = 0;
+
+        element.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].pageX;
+            startY = e.touches[0].pageY;
+        });
+
+        element.addEventListener('touchend', (e) => {
+            const endX = e.changedTouches[0].pageX;
+            const endY = e.changedTouches[0].pageY;
+            const diffX = endX - startX;
+            const diffY = endY - startY;
+
+            // 确保是水平滑动
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0 && onSwipeRight) {
+                    onSwipeRight();
+                } else if (diffX < 0 && onSwipeLeft) {
+                    onSwipeLeft();
+                }
+            }
+        });
+    }
+}
+
+// 性能优化
+class PerformanceOptimizer {
+    static debounce(func, wait = 300) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    static throttle(func, limit = 300) {
+        let inThrottle;
+        return function executedFunction(...args) {
+            if (!inThrottle) {
+                func(...args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+
+    static lazyLoadImages() {
+        const images = document.querySelectorAll('img[data-src]');
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+
+        images.forEach(img => imageObserver.observe(img));
+    }
+}
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化响应式助手
+    ResponsiveHelper.init();
+
+    // 优化移动端表格
+    ResponsiveHelper.optimizeTableForMobile();
+
+    // 懒加载图片
+    PerformanceOptimizer.lazyLoadImages();
+
+    // 创建 Toast 容器
+    if (!document.getElementById('toastContainer')) {
+        Toast.createToastContainer();
+    }
+});
+
+// 导出新增工具类
+window.DeviceDetector = DeviceDetector;
+window.ResponsiveHelper = ResponsiveHelper;
+window.TouchGestures = TouchGestures;
+window.PerformanceOptimizer = PerformanceOptimizer;

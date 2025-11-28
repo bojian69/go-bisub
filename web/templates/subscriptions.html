@@ -3,9 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{{.title}}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/responsive.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
     <style>
         .status-badge {
             font-size: 0.85em;
@@ -25,35 +29,70 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/admin">BI订阅管理</a>
-            <div class="navbar-nav">
-                <a class="nav-link active" href="/admin/subscriptions">订阅管理</a>
-                <a class="nav-link" href="/admin/stats">统计报表</a>
+            <a class="navbar-brand" href="/admin">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-graph-up d-inline-block align-text-top me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z" />
+                </svg>
+                BI订阅管理
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link active" href="/admin/subscriptions">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-list-task me-1" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5H2zM3 3H2v1h1V3z" />
+                            <path
+                                d="M5 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9z" />
+                            <path fill-rule="evenodd"
+                                d="M1.5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V7zM2 7h1v1H2V7zm0 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H2zm1 .5H2v1h1v-1z" />
+                        </svg>
+                        订阅管理
+                    </a>
+                    <a class="nav-link" href="/admin/stats">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-bar-chart me-1" viewBox="0 0 16 16">
+                            <path
+                                d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z" />
+                        </svg>
+                        统计报表
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="container-fluid mt-4 has-mobile-toolbar">
+        <div class="page-header mb-4">
             <h2>订阅管理</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg"
-                    viewBox="0 0 16 16">
-                    <path
-                        d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z" />
-                </svg>
-                创建订阅
-            </button>
         </div>
 
+        <!-- 移动端搜索切换按钮 -->
+        <button class="btn btn-outline-primary mobile-search-toggle d-md-none" onclick="toggleMobileSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1"
+                viewBox="0 0 16 16">
+                <path
+                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+            </svg>
+            搜索和筛选
+        </button>
+
         <!-- 搜索和筛选 -->
-        <div class="card mb-3">
+        <div class="card mb-3 search-panel-mobile">
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-12">
                         <input type="text" class="form-control" id="searchKey" placeholder="搜索订阅Key">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3 col-12">
+                        <input type="text" class="form-control" id="searchTitle" placeholder="搜索标题">
+                    </div>
+                    <div class="col-md-2 col-6">
                         <select class="form-select" id="filterStatus">
                             <option value="">全部状态</option>
                             <option value="A">待生效</option>
@@ -62,9 +101,34 @@
                             <option value="D">已失效</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary" onclick="loadSubscriptions()">搜索</button>
-                        <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+                    <div class="col-md-4 col-6">
+                        <button class="btn btn-primary me-2" onclick="loadSubscriptions()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-search" viewBox="0 0 16 16">
+                                <path
+                                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                            </svg>
+                            <span class="d-none d-md-inline ms-1">搜索</span>
+                        </button>
+                        <button class="btn btn-secondary me-2" onclick="resetFilters()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+                                <path
+                                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+                            </svg>
+                            <span class="d-none d-md-inline ms-1">重置</span>
+                        </button>
+                        <button class="btn btn-success d-none d-md-inline-block" data-bs-toggle="modal"
+                            data-bs-target="#createModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-plus-lg me-1" viewBox="0 0 16 16">
+                                <path
+                                    d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z" />
+                            </svg>
+                            创建订阅
+                        </button>
                     </div>
                 </div>
             </div>
@@ -79,12 +143,12 @@
                             <tr>
                                 <th>订阅Key</th>
                                 <th>版本</th>
-                                <th>标题</th>
-                                <th>类型</th>
+                                <th class="hide-mobile">标题</th>
+                                <th class="hide-mobile">类型</th>
                                 <th>状态</th>
-                                <th>创建人</th>
-                                <th>创建时间</th>
-                                <th style="width: 200px;">操作</th>
+                                <th class="hide-mobile">创建人</th>
+                                <th class="hide-mobile">创建时间</th>
+                                <th style="min-width: 120px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="subscriptionsTable">
@@ -210,7 +274,7 @@
 
     <!-- 执行订阅模态框 -->
     <div class="modal fade" id="executeModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">执行订阅</h5>
@@ -221,29 +285,78 @@
                         <label class="form-label">订阅信息</label>
                         <div id="executeInfo" class="alert alert-info"></div>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">执行参数 (JSON格式)</label>
-                        <textarea class="form-control code-editor" id="executeVariables" rows="6"
-                            placeholder='{"id": 123, "date": "2024-01-01"}'>{}</textarea>
+                        <label class="form-label fw-bold">执行参数</label>
+                        <div id="executeParamsList" class="mb-2">
+                            <!-- 参数列表将动态生成 -->
+                        </div>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">SQL预览</label>
+                        <pre class="bg-light p-3 rounded code-editor" id="sqlPreview"
+                            style="max-height: 300px; overflow-y: auto;"></pre>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">超时时间 (毫秒)</label>
                         <input type="number" class="form-control" id="executeTimeout" value="30000">
                     </div>
+
                     <div id="executeResult" class="mt-3" style="display:none;">
-                        <label class="form-label">执行结果</label>
-                        <pre class="bg-light p-3 rounded" id="executeResultContent"></pre>
+                        <label class="form-label fw-bold">执行结果</label>
+                        <pre class="bg-light p-3 rounded" id="executeResultContent"
+                            style="max-height: 400px; overflow-y: auto;"></pre>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    <button type="button" class="btn btn-primary" onclick="doExecute()">执行</button>
+                    <button type="button" class="btn btn-primary" onclick="doExecute()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-play-fill me-1" viewBox="0 0 16 16">
+                            <path
+                                d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
+                        </svg>
+                        执行
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 移动端底部工具栏 -->
+    <div class="mobile-toolbar d-md-none">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle"
+                viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                <path
+                    d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+            </svg>
+            <span>创建</span>
+        </button>
+        <button class="btn btn-outline-primary" onclick="loadSubscriptions(currentPage)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+                <path
+                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+            </svg>
+            <span>刷新</span>
+        </button>
+        <a href="/admin/stats" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bar-chart"
+                viewBox="0 0 16 16">
+                <path
+                    d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z" />
+            </svg>
+            <span>统计</span>
+        </a>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/common.js"></script>
     <script>
         const API_BASE = '/api';
         let currentPage = 1;
@@ -364,8 +477,19 @@
             currentPage = page;
             const offset = (page - 1) * currentLimit;
 
+            // 获取搜索条件
+            const searchKey = document.getElementById('searchKey').value.trim();
+            const searchTitle = document.getElementById('searchTitle').value.trim();
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            // 构建查询参数
+            let url = `${API_BASE}/subscriptions?limit=${currentLimit}&offset=${offset}`;
+            if (searchKey) url += `&sub_key=${encodeURIComponent(searchKey)}`;
+            if (searchTitle) url += `&title=${encodeURIComponent(searchTitle)}`;
+            if (filterStatus) url += `&status=${filterStatus}`;
+
             try {
-                const response = await fetch(`${API_BASE}/subscriptions?limit=${currentLimit}&offset=${offset}`);
+                const response = await fetch(url);
                 const result = await response.json();
 
                 if (result.code === 'OK') {
@@ -385,32 +509,49 @@
             const tbody = document.getElementById('subscriptionsTable');
 
             if (subscriptions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">暂无数据</td></tr>';
                 return;
             }
 
             tbody.innerHTML = subscriptions.map(sub => `
                 <tr>
-                    <td><code>${sub.sub_key}</code></td>
+                    <td><code class="text-break">${sub.sub_key}</code></td>
                     <td><span class="badge bg-secondary">v${sub.version}</span></td>
-                    <td>${sub.title || '-'}</td>
-                    <td>${getTypeText(sub.type)}</td>
+                    <td class="hide-mobile">${sub.title || '-'}</td>
+                    <td class="hide-mobile">${getTypeText(sub.type)}</td>
                     <td><span class="badge ${getStatusBadgeClass(sub.status)}">${getStatusText(sub.status)}</span></td>
-                    <td>${sub.creator_id || '-'}</td>
-                    <td>${formatDateTime(sub.created_at)}</td>
+                    <td class="hide-mobile">${sub.creator_id || '-'}</td>
+                    <td class="hide-mobile">${formatDateTime(sub.created_at)}</td>
                     <td class="action-buttons">
-                        <button class="btn btn-sm btn-outline-success" onclick='showExecuteModal(${JSON.stringify(sub)})' title="执行">
-                            ▶
+                        <button class="btn btn-sm btn-outline-success" onclick='showExecuteModal(${JSON.stringify(sub).replace(/'/g, "&#39;")})' title="执行">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                                <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                            </svg>
+                            <span class="d-none d-lg-inline ms-1">执行</span>
                         </button>
-                        <button class="btn btn-sm btn-outline-primary" onclick='viewDetails(${JSON.stringify(sub)})' title="查看">
-                            👁
+                        <button class="btn btn-sm btn-outline-primary" onclick='viewDetails(${JSON.stringify(sub).replace(/'/g, "&#39;")})' title="查看">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
+                            <span class="d-none d-lg-inline ms-1">查看</span>
                         </button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteSubscription('${sub.sub_key}', ${sub.version}, '${sub.type}')" title="删除">
-                            🗑
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                            </svg>
+                            <span class="d-none d-lg-inline ms-1">删除</span>
                         </button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        // 切换移动端搜索面板
+        function toggleMobileSearch() {
+            const panel = document.querySelector('.search-panel-mobile');
+            panel.classList.toggle('show');
         }
 
         // 渲染分页
@@ -546,21 +687,105 @@
                 <strong>版本:</strong> v${sub.version}<br>
                 <strong>标题:</strong> ${sub.title}
             `;
-            document.getElementById('executeVariables').value = '{}';
+
+            // 渲染参数列表
+            renderExecuteParams(sub);
+
+            // 初始化SQL预览
+            updateSqlPreview(sub);
+
             document.getElementById('executeResult').style.display = 'none';
             new bootstrap.Modal(document.getElementById('executeModal')).show();
         }
 
+        // 渲染执行参数列表
+        function renderExecuteParams(sub) {
+            const container = document.getElementById('executeParamsList');
+            const sqlReplace = sub.extra_config?.sql_replace || {};
+
+            if (Object.keys(sqlReplace).length === 0) {
+                container.innerHTML = '<div class="alert alert-warning">该订阅没有定义参数</div>';
+                return;
+            }
+
+            let html = '<div class="row g-3">';
+            Object.entries(sqlReplace).forEach(([key, description]) => {
+                html += `
+                    <div class="col-md-6 col-12">
+                        <label class="form-label">
+                            <code class="text-primary">${key}</code>
+                            <small class="text-muted ms-2">${description}</small>
+                        </label>
+                        <input type="text" 
+                               class="form-control execute-param" 
+                               data-param="${key}"
+                               placeholder="请输入${description}"
+                               onchange="updateSqlPreview(executeContext)">
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // 更新SQL预览
+        function updateSqlPreview(sub) {
+            const sqlContent = sub.extra_config?.sql_content || '';
+            const sqlReplace = sub.extra_config?.sql_replace || {};
+
+            let previewSql = sqlContent;
+
+            // 获取所有参数输入框的值
+            document.querySelectorAll('.execute-param').forEach(input => {
+                const paramName = input.dataset.param;
+                const paramValue = input.value.trim();
+
+                if (paramValue) {
+                    // 替换SQL中的占位符
+                    const regex = new RegExp(`'${paramName}'`, 'g');
+                    previewSql = previewSql.replace(regex, `'${paramValue}'`);
+                } else {
+                    // 如果没有输入值，保持占位符但高亮显示
+                    const regex = new RegExp(`'${paramName}'`, 'g');
+                    previewSql = previewSql.replace(regex, `'<span style="background-color: #fff3cd; color: #856404;">${paramName}</span>'`);
+                }
+            });
+
+            // 如果没有输入框（首次加载），高亮所有占位符
+            if (document.querySelectorAll('.execute-param').length === 0) {
+                Object.keys(sqlReplace).forEach(paramName => {
+                    const regex = new RegExp(`'${paramName}'`, 'g');
+                    previewSql = previewSql.replace(regex, `'<span style="background-color: #fff3cd; color: #856404;">${paramName}</span>'`);
+                });
+            }
+
+            document.getElementById('sqlPreview').innerHTML = previewSql || '无SQL内容';
+        }
+
         // 执行订阅
         async function doExecute() {
-            const variables = document.getElementById('executeVariables').value;
             const timeout = parseInt(document.getElementById('executeTimeout').value);
 
-            let params;
-            try {
-                params = JSON.parse(variables);
-            } catch (e) {
-                showError('参数格式错误，请输入有效的JSON');
+            // 从输入框收集参数
+            const params = {};
+            let hasEmptyParam = false;
+
+            document.querySelectorAll('.execute-param').forEach(input => {
+                const paramName = input.dataset.param;
+                const paramValue = input.value.trim();
+
+                if (!paramValue) {
+                    hasEmptyParam = true;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                    params[paramName] = paramValue;
+                }
+            });
+
+            if (hasEmptyParam) {
+                showError('请填写所有必填参数');
                 return;
             }
 
@@ -622,6 +847,7 @@
         // 重置筛选
         function resetFilters() {
             document.getElementById('searchKey').value = '';
+            document.getElementById('searchTitle').value = '';
             document.getElementById('filterStatus').value = '';
             loadSubscriptions(1);
         }
