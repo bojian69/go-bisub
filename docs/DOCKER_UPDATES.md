@@ -1,6 +1,45 @@
 # Docker 配置更新总结
 
-## 📋 更新内容
+## 🎯 最新更新（云服务版本）
+
+### 2024-12-01: 云服务部署支持
+
+**重大变更：移除本地 MySQL 和 Redis**
+
+为了更好地支持生产环境部署，我们更新了 Docker 配置，移除了本地 MySQL 和 Redis 容器，改为使用云服务：
+
+#### 变更内容：
+- ✅ 移除 docker-compose.yml 中的 MySQL 服务
+- ✅ 移除 docker-compose.yml 中的 Redis 服务
+- ✅ 简化为单容器部署（仅应用服务）
+- ✅ 通过环境变量配置云数据库连接
+- ✅ 新增云服务部署文档
+- ✅ 新增镜像推送脚本
+
+#### 使用场景：
+- **生产环境**: 使用阿里云 RDS + 阿里云 Redis
+- **测试环境**: 使用云服务提供商的数据库服务
+- **开发环境**: 仍可使用本地开发模式（`make dev`）
+
+#### 快速开始：
+```bash
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env，填入云服务连接信息
+
+# 2. 构建并启动
+make docker-build
+make docker-up
+
+# 3. 推送到远程仓库（可选）
+./scripts/docker-push.sh
+```
+
+详见：[云服务部署指南](./CLOUD_DEPLOYMENT.md)
+
+---
+
+## 📋 历史更新内容
 
 ### 1. Dockerfile 优化
 

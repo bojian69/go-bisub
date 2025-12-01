@@ -152,8 +152,12 @@ docker-run: ## 运行Docker容器
 	docker run -p 8080:8080 --env-file .env $(APP_NAME):latest
 
 .PHONY: docker-up
-docker-up: ## 启动Docker Compose服务
+docker-up: ## 启动Docker Compose服务（云服务版本）
 	@echo "Starting services with Docker Compose..."
+	@if [ ! -f .env ]; then \
+		echo "Error: .env file not found. Please copy .env.example to .env and configure it."; \
+		exit 1; \
+	fi
 	docker-compose up -d
 	@echo "Waiting for services to be ready..."
 	@sleep 5
@@ -181,12 +185,35 @@ docker-ps: ## 查看Docker容器状态
 .PHONY: docker-clean
 docker-clean: ## 清理Docker资源
 	@echo "Cleaning Docker resources..."
-	docker-compose down -v
+	docker-compose down
 	docker system prune -f
 
 .PHONY: docker-shell
 docker-shell: ## 进入应用容器
 	@docker-compose exec go-bisub sh
+
+.PHONY: docker-push
+docker-push: ## 推送镜像到远程仓库
+	@echo "Pushing Docker image..."
+	@read -p "Enter registry (e.g., docker.io/username or registry.cn-hangzhou.aliyuncs.com/namespace): " registry; \
+	read -p "Enter image name [$(APP_NAME)]: " image_name; \
+	image_name=$${image_name:-$(APP_NAME)}; \
+	read -p "Enter tag [$(VERSION)]: " tag; \
+	tag=$${tag:-$(VERSION)}; \
+	echo "Tagging image as $${registry}/$${image_name}:$${tag}"; \
+	docker tag $(APP_NAME):latest $${registry}/$${image_name}:$${tag}; \
+	docker tag $(APP_NAME):latest $${registry}/$${image_name}:latest; \
+	echo "Pushing $${registry}/$${image_name}:$${tag}"; \
+	docker push $${registry}/$${image_name}:$${tag}; \
+	docker push $${registry}/$${image_name}:latest; \
+	echo "Push completed!"
+
+.PHONY: docker-pull
+docker-pull: ## 从远程仓库拉取镜像
+	@echo "Pulling Docker image..."
+	@read -p "Enter full image path (e.g., registry/namespace/image:tag): " image; \
+	docker pull $${image}; \
+	echo "Pull completed!"
 
 # 兼容旧命令
 .PHONY: docker-compose-up

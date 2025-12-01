@@ -12,20 +12,30 @@ services:
         GIT_COMMIT: ${GIT_COMMIT:-$(git rev-parse HEAD)}
     container_name: go-bisub-app
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     environment:
+      # 应用配置
       - GIN_MODE=release
       - TZ=Asia/Shanghai
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      
+      # 数据库配置（使用云服务）
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-go_sub}
+      
+      # Redis 配置（使用云服务）
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=${REDIS_DB:-0}
+      
+      # JWT 配置
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRE_HOURS=${JWT_EXPIRE_HOURS:-24}
     volumes:
-      - ./config.docker.yaml:/app/config.yaml:ro
       - ./logs:/app/logs
-    networks:
-      - go-bisub-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
@@ -33,63 +43,3 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
-
-  # MySQL 数据库
-  mysql:
-    image: mysql:8.0
-    container_name: go-bisub-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
-      MYSQL_DATABASE: go_sub
-      MYSQL_USER: ${MYSQL_USER:-bisub}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-bisub123}
-      TZ: Asia/Shanghai
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-      - ./init_operation_logs.sql:/docker-entrypoint-initdb.d/02-operation-logs.sql:ro
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --default-authentication-plugin=mysql_native_password
-      - --max_connections=1000
-      - --innodb_buffer_pool_size=256M
-    networks:
-      - go-bisub-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-password}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # Redis 缓存
-  redis:
-    image: redis:7-alpine
-    container_name: go-bisub-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
-    networks:
-      - go-bisub-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-
-networks:
-  go-bisub-network:
-    driver: bridge
-
-volumes:
-  mysql_data:
-    driver: local
-  redis_data:
-    driver: local
