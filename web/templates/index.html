@@ -192,43 +192,552 @@
             </div>
         </div>
 
-        <!-- API 文档链接 -->
+        <!-- API 文档 -->
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">快速开始</h5>
+                        <h5 class="card-title">📚 API 文档与快速开始</h5>
                         <p class="card-text">使用 RESTful API 集成订阅服务到您的应用中</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>API 端点</h6>
-                                <ul class="list-unstyled">
-                                    <li><code>GET /v1/subscriptions</code> - 获取订阅列表</li>
-                                    <li><code>POST /v1/subscriptions</code> - 创建订阅</li>
-                                    <li><code>POST /v1/subscriptions/:key/execute</code> - 执行订阅</li>
-                                    <li><code>GET /v1/subscriptions/stats</code> - 获取统计</li>
-                                </ul>
+
+                        <!-- Tab 导航 -->
+                        <ul class="nav nav-pills mb-3" id="apiTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="endpoints-tab" data-bs-toggle="pill"
+                                    data-bs-target="#endpoints" type="button">API 端点</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="auth-tab" data-bs-toggle="pill" data-bs-target="#auth"
+                                    type="button">认证方式</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="examples-tab" data-bs-toggle="pill"
+                                    data-bs-target="#examples" type="button">cURL 示例</button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab 内容 -->
+                        <div class="tab-content" id="apiTabContent">
+                            <!-- API 端点 -->
+                            <div class="tab-pane fade show active" id="endpoints" role="tabpanel">
+                                <h6 class="mb-3">可用的 API 端点</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>方法</th>
+                                                <th>端点</th>
+                                                <th>说明</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="badge bg-success">GET</span></td>
+                                                <td><code>/v1/subscriptions</code></td>
+                                                <td>获取订阅列表</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-primary">POST</span></td>
+                                                <td><code>/v1/subscriptions</code></td>
+                                                <td>创建新订阅</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-success">GET</span></td>
+                                                <td><code>/v1/subscriptions/:key</code></td>
+                                                <td>获取订阅详情</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-warning">PUT</span></td>
+                                                <td><code>/v1/subscriptions/:key/versions/:version</code></td>
+                                                <td>更新订阅</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-info">PATCH</span></td>
+                                                <td><code>/v1/subscriptions/:key/versions/:version/status</code></td>
+                                                <td>更新订阅状态</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-primary">POST</span></td>
+                                                <td><code>/v1/subscriptions/:key/execute</code></td>
+                                                <td>执行订阅</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-danger">DELETE</span></td>
+                                                <td><code>/v1/subscriptions/:key/versions/:version</code></td>
+                                                <td>删除订阅</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-success">GET</span></td>
+                                                <td><code>/v1/subscriptions/stats</code></td>
+                                                <td>获取统计数据</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <h6>认证方式</h6>
-                                <p class="text-muted">API 请求需要在 Header 中携带 JWT Token：</p>
+
+                            <!-- 认证方式 -->
+                            <div class="tab-pane fade" id="auth" role="tabpanel">
+                                <h6 class="mb-3">JWT Token 认证</h6>
+                                <p class="text-muted">所有 API 请求需要在 Header 中携带 JWT Token：</p>
                                 <pre
-                                    class="bg-light p-2 rounded"><code>Authorization: Bearer &lt;your-token&gt;</code></pre>
+                                    class="bg-light p-3 rounded"><code>Authorization: Bearer &lt;your-token&gt;</code></pre>
+
+                                <h6 class="mt-4 mb-3">生成 JWT Token</h6>
+                                <p class="text-muted small">选择您使用的编程语言：</p>
+
+                                <ul class="nav nav-tabs" id="tokenTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="curl-tab" data-bs-toggle="tab"
+                                            data-bs-target="#curl" type="button">cURL</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="python-tab" data-bs-toggle="tab"
+                                            data-bs-target="#python" type="button">Python</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="go-tab" data-bs-toggle="tab" data-bs-target="#go"
+                                            type="button">Go</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="php-tab" data-bs-toggle="tab" data-bs-target="#php"
+                                            type="button">PHP</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="java-tab" data-bs-toggle="tab"
+                                            data-bs-target="#java" type="button">Java</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="javascript-tab" data-bs-toggle="tab"
+                                            data-bs-target="#javascript" type="button">JavaScript</button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content border border-top-0 p-3" id="tokenTabContent">
+                                    <!-- cURL -->
+                                    <div class="tab-pane fade show active" id="curl" role="tabpanel">
+                                        <div class="position-relative">
+                                            <pre class="bg-dark text-light p-3 rounded mb-0"
+                                                style="font-size: 0.85rem;"><code id="tokenCurl"># 使用 Python 一行命令生成 Token
+python3 -c "import jwt, time; print(jwt.encode({'user_id': 1, 'username': 'admin', 'exp': int(time.time()) + 86400, 'iat': int(time.time())}, 'sk-mviKoV-IGNWNRxK0SX6MXyj', algorithm='HS256'))"
+
+# 或者使用在线工具 jwt.io 手动生成
+# Header: {"alg": "HS256", "typ": "JWT"}
+# Payload: {"user_id": 1, "username": "admin", "exp": 当前时间戳+86400, "iat": 当前时间戳}
+# Secret: sk-mviKoV-IGNWNRxK0SX6MXyj</code></pre>
+                                            <button
+                                                class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                onclick="copyToClipboard('tokenCurl', this)"
+                                                style="font-size: 0.75rem;">
+                                                📋 复制
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            💡 前置条件：<code>pip install PyJWT</code> 或访问 <a href="https://jwt.io"
+                                                target="_blank">jwt.io</a> 在线生成
+                                        </p>
+                                    </div>
+
+                                    <!-- Python -->
+                                    <div class="tab-pane fade" id="python" role="tabpanel">
+                                        <div class="position-relative">
+                                            <pre class="bg-dark text-light p-3 rounded mb-0"
+                                                style="font-size: 0.85rem;"><code id="tokenPython">import jwt
+import time
+
+# JWT Secret (从配置文件获取)
+secret = "sk-mviKoV-IGNWNRxK0SX6MXyj"
+
+payload = {
+    "user_id": 1,
+    "username": "admin",
+    "exp": int(time.time()) + 86400,  # 24小时后过期
+    "iat": int(time.time())
+}
+
+token = jwt.encode(payload, secret, algorithm="HS256")
+print(token)</code></pre>
+                                            <button
+                                                class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                onclick="copyToClipboard('tokenPython', this)"
+                                                style="font-size: 0.75rem;">
+                                                📋 复制
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            💡 安装依赖：<code>pip install PyJWT</code>
+                                        </p>
+                                    </div>
+
+                                    <!-- Go -->
+                                    <div class="tab-pane fade" id="go" role="tabpanel">
+                                        <div class="position-relative">
+                                            <pre class="bg-dark text-light p-3 rounded mb-0"
+                                                style="font-size: 0.85rem;"><code id="tokenGo">package main
+
+import (
+    "fmt"
+    "time"
+    "github.com/golang-jwt/jwt/v5"
+)
+
+func main() {
+    secret := "sk-mviKoV-IGNWNRxK0SX6MXyj"
+    
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+        "user_id":  1,
+        "username": "admin",
+        "exp":      time.Now().Add(24 * time.Hour).Unix(),
+        "iat":      time.Now().Unix(),
+    })
+
+    tokenString, err := token.SignedString([]byte(secret))
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(tokenString)
+}</code></pre>
+                                            <button
+                                                class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                onclick="copyToClipboard('tokenGo', this)" style="font-size: 0.75rem;">
+                                                📋 复制
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            💡 安装依赖：<code>go get github.com/golang-jwt/jwt/v5</code>
+                                        </p>
+                                    </div>
+
+                                    <!-- PHP -->
+                                    <div class="tab-pane fade" id="php" role="tabpanel">
+                                        <div class="position-relative">
+                                            <pre class="bg-dark text-light p-3 rounded mb-0"
+                                                style="font-size: 0.85rem;"><code id="tokenPHP">&lt;?php
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+
+$secret = "sk-mviKoV-IGNWNRxK0SX6MXyj";
+
+$payload = [
+    "user_id" => 1,
+    "username" => "admin",
+    "exp" => time() + 86400,  // 24小时后过期
+    "iat" => time()
+];
+
+$token = JWT::encode($payload, $secret, 'HS256');
+echo $token;
+?&gt;</code></pre>
+                                            <button
+                                                class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                onclick="copyToClipboard('tokenPHP', this)" style="font-size: 0.75rem;">
+                                                📋 复制
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            💡 安装依赖：<code>composer require firebase/php-jwt</code>
+                                        </p>
+                                    </div>
+
+                                    <!-- Java -->
+                                    <div class="tab-pane fade" id="java" role="tabpanel">
+                                        <div class="position-relative">
+                                            <pre class="bg-dark text-light p-3 rounded mb-0"
+                                                style="font-size: 0.85rem;"><code id="tokenJava">import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import java.util.Date;
+
+public class JWTGenerator {
+    public static void main(String[] args) {
+        String secret = "sk-mviKoV-IGNWNRxK0SX6MXyj";
+        
+        String token = Jwts.builder()
+            .claim("user_id", 1)
+            .claim("username", "admin")
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+            .signWith(SignatureAlgorithm.HS256, secret.getBytes())
+            .compact();
+        
+        System.out.println(token);
+    }
+}</code></pre>
+                                            <button
+                                                class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                onclick="copyToClipboard('tokenJava', this)"
+                                                style="font-size: 0.75rem;">
+                                                📋 复制
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            💡 Maven
+                                            依赖：<code>&lt;dependency&gt;io.jsonwebtoken:jjwt:0.9.1&lt;/dependency&gt;</code>
+                                        </p>
+                                    </div>
+
+                                    <!-- JavaScript/Node.js -->
+                                    <div class="tab-pane fade" id="javascript" role="tabpanel">
+                                        <div class="position-relative">
+                                            <pre class="bg-dark text-light p-3 rounded mb-0"
+                                                style="font-size: 0.85rem;"><code id="tokenJS">const jwt = require('jsonwebtoken');
+
+const secret = "sk-mviKoV-IGNWNRxK0SX6MXyj";
+
+const payload = {
+    user_id: 1,
+    username: "admin",
+    exp: Math.floor(Date.now() / 1000) + 86400,  // 24小时后过期
+    iat: Math.floor(Date.now() / 1000)
+};
+
+const token = jwt.sign(payload, secret, { algorithm: 'HS256' });
+console.log(token);
+
+// Vue/React 中使用 (浏览器端)
+// import jwt from 'jsonwebtoken-esm';
+// 注意：浏览器端不建议暴露 secret，应该由后端生成</code></pre>
+                                            <button
+                                                class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                onclick="copyToClipboard('tokenJS', this)" style="font-size: 0.75rem;">
+                                                📋 复制
+                                            </button>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            💡 安装依赖：<code>npm install jsonwebtoken</code>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- cURL 示例 -->
+                            <div class="tab-pane fade" id="examples" role="tabpanel">
+                                <h6 class="mb-3">📋 cURL 请求示例</h6>
+                                <div class="accordion" id="curlExamples">
+                                    <!-- 获取订阅列表 -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#curl1">
+                                                1. 获取订阅列表
+                                            </button>
+                                        </h2>
+                                        <div id="curl1" class="accordion-collapse collapse show"
+                                            data-bs-parent="#curlExamples">
+                                            <div class="accordion-body">
+                                                <div class="position-relative">
+                                                    <pre class="bg-dark text-light p-3 rounded"
+                                                        style="margin-bottom: 0;"><code id="code1">curl 'http://localhost:8080/v1/subscriptions' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json'</code></pre>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                        onclick="copyToClipboard('code1', this)">
+                                                        📋 复制
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 创建订阅 -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#curl2">
+                                                2. 创建订阅
+                                            </button>
+                                        </h2>
+                                        <div id="curl2" class="accordion-collapse collapse"
+                                            data-bs-parent="#curlExamples">
+                                            <div class="accordion-body">
+                                                <div class="position-relative">
+                                                    <pre class="bg-dark text-light p-3 rounded"
+                                                        style="margin-bottom: 0;"><code id="code2">curl -X POST 'http://localhost:8080/v1/subscriptions' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "type": "A",
+    "sub_key": "example_subscription",
+    "version": 1,
+    "title": "示例订阅",
+    "abstract": "这是一个示例订阅",
+    "status": "A",
+    "extra_config": {
+      "sql_content": "SELECT * FROM table WHERE id = id_replace",
+      "sql_replace": {
+        "id_replace": "ID参数"
+      },
+      "db_source": "default"
+    }
+  }'</code></pre>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                        onclick="copyToClipboard('code2', this)">
+                                                        📋 复制
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 执行订阅 -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#curl3">
+                                                3. 执行订阅
+                                            </button>
+                                        </h2>
+                                        <div id="curl3" class="accordion-collapse collapse"
+                                            data-bs-parent="#curlExamples">
+                                            <div class="accordion-body">
+                                                <div class="position-relative">
+                                                    <pre class="bg-dark text-light p-3 rounded"
+                                                        style="margin-bottom: 0;"><code id="code3">curl -X POST 'http://localhost:8080/v1/subscriptions/example_subscription/versions/1/execute?type=A' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "variables": {
+      "id_replace": "123"
+    },
+    "timeout": 30000
+  }'</code></pre>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                        onclick="copyToClipboard('code3', this)">
+                                                        📋 复制
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 更新订阅状态 -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#curl4">
+                                                4. 更新订阅状态
+                                            </button>
+                                        </h2>
+                                        <div id="curl4" class="accordion-collapse collapse"
+                                            data-bs-parent="#curlExamples">
+                                            <div class="accordion-body">
+                                                <div class="position-relative">
+                                                    <pre class="bg-dark text-light p-3 rounded"
+                                                        style="margin-bottom: 0;"><code id="code4">curl -X PUT 'http://localhost:8080/v1/subscriptions/example_subscription/versions/1/status?type=A' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "status": "B"
+  }'</code></pre>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                        onclick="copyToClipboard('code4', this)">
+                                                        📋 复制
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 获取统计数据 -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#curl5">
+                                                5. 获取统计数据
+                                            </button>
+                                        </h2>
+                                        <div id="curl5" class="accordion-collapse collapse"
+                                            data-bs-parent="#curlExamples">
+                                            <div class="accordion-body">
+                                                <div class="position-relative">
+                                                    <pre class="bg-dark text-light p-3 rounded"
+                                                        style="margin-bottom: 0;"><code id="code5">curl 'http://localhost:8080/v1/subscriptions/stats?start_time=2024-01-01T00:00:00Z&end_time=2024-12-31T23:59:59Z&limit=10&offset=0' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json'</code></pre>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-2"
+                                                        onclick="copyToClipboard('code5', this)">
+                                                        📋 复制
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info mt-3" role="alert">
+                                    <strong>💡 提示：</strong> 请将 <code>YOUR_JWT_TOKEN</code> 替换为您的实际 JWT Token。
+                                    可以在"认证方式"标签页中生成。
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <footer class="bg-dark text-white text-center py-3 mt-5">
-        <div class="container">
-            <p class="mb-0">BI 订阅管理系统 &copy; 2024 | Powered by Gin Framework</p>
-        </div>
-    </footer>
+        <footer class="bg-dark text-white text-center py-3 mt-5">
+            <div class="container">
+                <p class="mb-0">BI 订阅管理系统 &copy; 2024 | Powered by Gin Framework</p>
+            </div>
+        </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function copyToClipboard(codeId, button) {
+                const codeElement = document.getElementById(codeId);
+                const text = codeElement.textContent;
+
+                // 使用现代 Clipboard API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showCopySuccess(button);
+                    }).catch(err => {
+                        console.error('复制失败:', err);
+                        fallbackCopy(text, button);
+                    });
+                } else {
+                    fallbackCopy(text, button);
+                }
+            }
+
+            function fallbackCopy(text, button) {
+                // 降级方案：使用 textarea
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+
+                try {
+                    document.execCommand('copy');
+                    showCopySuccess(button);
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    alert('复制失败，请手动复制');
+                }
+
+                document.body.removeChild(textarea);
+            }
+
+            function showCopySuccess(button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ 已复制';
+                button.classList.remove('btn-outline-light');
+                button.classList.add('btn-success');
+
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-light');
+                }, 2000);
+            }
+        </script>
 </body>
 
 </html>
