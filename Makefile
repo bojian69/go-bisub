@@ -144,28 +144,59 @@ deps-clean: ## 清理依赖
 .PHONY: docker-build
 docker-build: ## 构建Docker镜像
 	@echo "Building Docker image..."
-	docker build -t $(APP_NAME):$(VERSION) .
-	docker tag $(APP_NAME):$(VERSION) $(APP_NAME):latest
+	@./scripts/docker-build.sh $(VERSION)
 
 .PHONY: docker-run
 docker-run: ## 运行Docker容器
 	@echo "Running Docker container..."
 	docker run -p 8080:8080 --env-file .env $(APP_NAME):latest
 
-.PHONY: docker-compose-up
-docker-compose-up: ## 启动Docker Compose服务
+.PHONY: docker-up
+docker-up: ## 启动Docker Compose服务
 	@echo "Starting services with Docker Compose..."
 	docker-compose up -d
+	@echo "Waiting for services to be ready..."
+	@sleep 5
+	@docker-compose ps
 
-.PHONY: docker-compose-down
-docker-compose-down: ## 停止Docker Compose服务
+.PHONY: docker-down
+docker-down: ## 停止Docker Compose服务
 	@echo "Stopping services with Docker Compose..."
 	docker-compose down
 
-.PHONY: docker-compose-logs
-docker-compose-logs: ## 查看Docker Compose日志
+.PHONY: docker-restart
+docker-restart: ## 重启Docker Compose服务
+	@echo "Restarting services..."
+	docker-compose restart
+
+.PHONY: docker-logs
+docker-logs: ## 查看Docker Compose日志
 	@echo "Showing Docker Compose logs..."
-	docker-compose logs -f
+	docker-compose logs -f go-bisub
+
+.PHONY: docker-ps
+docker-ps: ## 查看Docker容器状态
+	@docker-compose ps
+
+.PHONY: docker-clean
+docker-clean: ## 清理Docker资源
+	@echo "Cleaning Docker resources..."
+	docker-compose down -v
+	docker system prune -f
+
+.PHONY: docker-shell
+docker-shell: ## 进入应用容器
+	@docker-compose exec go-bisub sh
+
+# 兼容旧命令
+.PHONY: docker-compose-up
+docker-compose-up: docker-up
+
+.PHONY: docker-compose-down
+docker-compose-down: docker-down
+
+.PHONY: docker-compose-logs
+docker-compose-logs: docker-logs
 
 # 数据库相关命令
 .PHONY: db-init
