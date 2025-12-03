@@ -55,12 +55,22 @@ docker login --username=your-username ccr.ccs.tencentyun.com
 # 赋予执行权限
 chmod +x scripts/docker-push.sh
 
-# 执行推送（传入用户名和版本号）
+# 单架构构建（当前平台）
 ./scripts/docker-push.sh your-username v1.0.0
 
-# 或者推送为 latest 版本
-./scripts/docker-push.sh your-username latest
+# 多架构构建（amd64 + arm64，推荐）
+./scripts/docker-push.sh your-username v1.0.0 --multi-arch
+
+# 推送为 latest 版本
+./scripts/docker-push.sh your-username latest --multi-arch
 ```
+
+**多架构构建说明：**
+
+- 使用 `--multi-arch` 参数会构建支持 `linux/amd64` 和 `linux/arm64` 的镜像
+- 适用于 Intel/AMD 服务器和 ARM 服务器（如 Apple Silicon、AWS Graviton）
+- 首次使用会自动创建 buildx builder
+- 构建时间会比单架构稍长
 
 **可选：配置自动登录**
 
@@ -69,7 +79,7 @@ chmod +x scripts/docker-push.sh
 ```bash
 export DOCKER_USERNAME="your-username"
 export DOCKER_PASSWORD="your-password"
-./scripts/docker-push.sh your-username v1.0.0
+./scripts/docker-push.sh your-username v1.0.0 --multi-arch
 ```
 
 ### 方法 2：手动构建和推送
@@ -256,14 +266,24 @@ docker-compose down
 ### Docker Hub
 
 ```bash
-# 构建
+# 单架构构建
 docker build -t your-username/go-bisub:v1.0.0 .
+
+# 多架构构建（推荐）
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t your-username/go-bisub:v1.0.0 \
+  --push \
+  .
 
 # 推送
 docker push your-username/go-bisub:v1.0.0
 
-# 拉取
+# 拉取（自动选择匹配的架构）
 docker pull your-username/go-bisub:v1.0.0
+
+# 查看镜像支持的架构
+docker buildx imagetools inspect your-username/go-bisub:v1.0.0
 ```
 
 ### 阿里云容器镜像服务
