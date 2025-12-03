@@ -40,14 +40,17 @@ make dev
   - [使用 Docker Compose](#使用docker-compose推荐)
   - [本地开发](#本地开发)
 - [常用开发命令](#常用开发命令)
-- [日志系统](#日志系统)
+- [日志和监控系统](#日志和监控系统)
 - [API文档](#api文档)
-- [项目启动流程](#项目启动流程)
-- [故障排查](#故障排查)
 - [配置说明](#配置说明)
 - [数据库表结构](#数据库表结构)
 - [部署](#部署)
+  - [本地 Docker 部署](#本地-docker-部署)
+  - [镜像仓库部署](#镜像仓库部署)
+  - [Kubernetes 部署](#kubernetes-部署)
 - [开发](#开发)
+- [项目启动流程](#项目启动流程)
+- [故障排查](#故障排查)
 - [文档](#文档)
 
 ## 功能特性
@@ -292,6 +295,10 @@ make build              # 构建应用
 make build-all          # 构建所有平台版本
 make docker-build       # 构建 Docker 镜像
 make docker-compose-up  # 启动 Docker 服务
+
+# Docker 镜像推送和部署
+./scripts/docker-push.sh <username> <version>    # 推送镜像到仓库
+./scripts/docker-deploy.sh <username> <version>  # 在其他机器部署
 ```
 
 #### 其他
@@ -508,23 +515,89 @@ web_ui:
 
 ## 部署
 
-### Docker部署
+### 本地 Docker 部署
 
 ```bash
-# 构建镜像
-docker build -t go-bisub:latest .
+# 使用 docker-compose（推荐）
+docker-compose up -d
 
-# 运行容器
+# 或手动构建和运行
+docker build -t go-bisub:latest .
 docker run -d \
   --name go-bisub \
   -p 8080:8080 \
-  -v $(pwd)/config.yaml:/root/config.yaml \
+  --env-file .env \
+  -v $(pwd)/logs:/app/logs \
   go-bisub:latest
 ```
 
-### Kubernetes部署
+### 镜像仓库部署
 
-参考 `k8s/` 目录下的YAML文件。
+#### 推送镜像到仓库
+
+```bash
+# 1. 登录 Docker Hub（或其他镜像仓库）
+docker login
+
+# 2. 构建并推送镜像
+./scripts/docker-push.sh your-username v1.0.0
+
+# 推送到阿里云（可选）
+export DOCKER_REGISTRY="registry.cn-hangzhou.aliyuncs.com"
+docker login --username=your-username registry.cn-hangzhou.aliyuncs.com
+./scripts/docker-push.sh your-namespace v1.0.0
+```
+
+#### 在其他机器上部署
+
+```bash
+# 1. 准备环境
+mkdir -p ~/go-bisub && cd ~/go-bisub
+
+# 2. 创建配置文件
+cat > .env << 'EOF'
+# 数据库配置
+DB_HOST=your-db-host
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your-password
+DB_NAME=go_sub
+
+# Redis 配置
+REDIS_HOST=your-redis-host
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# JWT 配置
+JWT_SECRET=your-jwt-secret
+
+# 其他配置...
+EOF
+
+# 3. 部署应用
+./scripts/docker-deploy.sh your-username v1.0.0
+
+# 或手动部署
+docker pull your-username/go-bisub:v1.0.0
+docker run -d \
+  --name go-bisub-app \
+  -p 8080:8080 \
+  --env-file .env \
+  -v $(pwd)/logs:/app/logs \
+  --restart unless-stopped \
+  your-username/go-bisub:v1.0.0
+```
+
+详细部署文档：
+- [Docker 镜像仓库部署指南](docs/DOCKER_REGISTRY_GUIDE.md) - 完整的镜像推送和部署流程
+- [Docker 快速开始](docs/DOCKER_QUICKSTART.md) - Docker 基础使用
+- [Docker 部署指南](docs/DOCKER_DEPLOYMENT.md) - 生产环境部署
+- [云服务部署](docs/CLOUD_DEPLOYMENT.md) - 云平台部署指南
+
+### Kubernetes 部署
+
+参考 `k8s/` 目录下的 YAML 文件。
 
 ## 开发
 
@@ -830,9 +903,17 @@ docker-compose down
 - [本地开发指南](docs/LOCAL_DEVELOPMENT.md) - 本地开发环境配置
 - [数据库迁移指南](docs/DATABASE_MIGRATION.md) - 数据库变更说明
 
+### 部署文档
+- [Docker 镜像仓库部署指南](docs/DOCKER_REGISTRY_GUIDE.md) - 镜像推送和远程部署 🚀
+- [Docker 快速开始](docs/DOCKER_QUICKSTART.md) - Docker 基础使用
+- [Docker 部署指南](docs/DOCKER_DEPLOYMENT.md) - 生产环境部署
+- [云服务部署](docs/CLOUD_DEPLOYMENT.md) - 云平台部署指南
+
 ### 技术文档
 - [更新日志](docs/CHANGELOG.md)
 - [操作日志实现](docs/OPERATION_LOGS_IMPLEMENTATION.md)
+- [日志系统架构](docs/LOGGING_ARCHITECTURE.md)
+- [监控标准规范](docs/MONITORING_STANDARDS.md)
 
 ## 许可证
 
