@@ -15,17 +15,29 @@ services:
       - "${APP_PORT:-8080}:8080"
     environment:
       # 应用配置
-      - GIN_MODE=release
-      - TZ=Asia/Shanghai
+      - GIN_MODE=${GIN_MODE:-release}
+      - TZ=${TZ:-Asia/Shanghai}
       
-      # 数据库配置（使用云服务）
+      # 主数据库配置
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT:-3306}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME:-go_sub}
       
-      # Redis 配置（使用云服务）
+      # 数据源配置（远程 RDS）
+      - DATASOURCE_DEFAULT_HOST=${DATASOURCE_DEFAULT_HOST}
+      - DATASOURCE_DEFAULT_PORT=${DATASOURCE_DEFAULT_PORT:-3306}
+      - DATASOURCE_DEFAULT_USER=${DATASOURCE_DEFAULT_USER}
+      - DATASOURCE_DEFAULT_PASS=${DATASOURCE_DEFAULT_PASS}
+      - DATASOURCE_DEFAULT_NAME=${DATASOURCE_DEFAULT_NAME}
+      - DATASOURCE_UHOMES_HOST=${DATASOURCE_UHOMES_HOST}
+      - DATASOURCE_UHOMES_PORT=${DATASOURCE_UHOMES_PORT:-3306}
+      - DATASOURCE_UHOMES_USER=${DATASOURCE_UHOMES_USER}
+      - DATASOURCE_UHOMES_PASS=${DATASOURCE_UHOMES_PASS}
+      - DATASOURCE_UHOMES_NAME=${DATASOURCE_UHOMES_NAME}
+      
+      # Redis 配置
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -34,6 +46,12 @@ services:
       # JWT 配置
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRE_HOURS=${JWT_EXPIRE_HOURS:-24}
+      
+      # Snowflake 配置
+      - SNOWFLAKE_NODE_ID=${SNOWFLAKE_NODE_ID:-1}
+      
+      # 日志配置
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       - ./logs:/app/logs
     restart: unless-stopped
