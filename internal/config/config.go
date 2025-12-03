@@ -74,6 +74,49 @@ func Load() (*Config, error) {
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./config")
 
+	// 启用环境变量支持
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("") // 不使用前缀
+	
+	// 绑定环境变量到配置项
+	// 数据库配置
+	viper.BindEnv("database.primary.host", "DB_HOST")
+	viper.BindEnv("database.primary.port", "DB_PORT")
+	viper.BindEnv("database.primary.username", "DB_USER")
+	viper.BindEnv("database.primary.password", "DB_PASSWORD")
+	viper.BindEnv("database.primary.database", "DB_NAME")
+	
+	// 数据源配置
+	viper.BindEnv("database.data_sources.default.host", "DATASOURCE_DEFAULT_HOST")
+	viper.BindEnv("database.data_sources.default.port", "DATASOURCE_DEFAULT_PORT")
+	viper.BindEnv("database.data_sources.default.username", "DATASOURCE_DEFAULT_USER")
+	viper.BindEnv("database.data_sources.default.password", "DATASOURCE_DEFAULT_PASS")
+	viper.BindEnv("database.data_sources.default.database", "DATASOURCE_DEFAULT_NAME")
+	
+	viper.BindEnv("database.data_sources.dbcfg_adb_uhomes.host", "DATASOURCE_UHOMES_HOST")
+	viper.BindEnv("database.data_sources.dbcfg_adb_uhomes.port", "DATASOURCE_UHOMES_PORT")
+	viper.BindEnv("database.data_sources.dbcfg_adb_uhomes.username", "DATASOURCE_UHOMES_USER")
+	viper.BindEnv("database.data_sources.dbcfg_adb_uhomes.password", "DATASOURCE_UHOMES_PASS")
+	viper.BindEnv("database.data_sources.dbcfg_adb_uhomes.database", "DATASOURCE_UHOMES_NAME")
+	
+	// Redis 配置
+	viper.BindEnv("redis.host", "REDIS_HOST")
+	viper.BindEnv("redis.port", "REDIS_PORT")
+	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	viper.BindEnv("redis.db", "REDIS_DB")
+	
+	// JWT 配置
+	viper.BindEnv("security.jwt_secret", "JWT_SECRET")
+	
+	// 日志配置
+	viper.BindEnv("logging.level", "LOG_LEVEL")
+	
+	// Snowflake 配置
+	viper.BindEnv("snowflake.node_id", "SNOWFLAKE_NODE_ID")
+	
+	// 服务器配置
+	viper.BindEnv("server.port", "SERVER_PORT")
+
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
