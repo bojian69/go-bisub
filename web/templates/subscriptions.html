@@ -186,6 +186,110 @@
         </div>
     </div>
 
+    <!-- 编辑订阅模态框 -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑订阅</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="edit_sub_key">
+                        <input type="hidden" id="edit_version">
+                        <input type="hidden" id="edit_type">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">订阅Key</label>
+                                    <input type="text" class="form-control" id="edit_sub_key_display" disabled>
+                                    <div class="form-text text-muted">订阅Key不可修改</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">版本号</label>
+                                    <input type="text" class="form-control" id="edit_version_display" disabled>
+                                    <div class="form-text text-muted">版本号不可修改</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">类型</label>
+                                    <input type="text" class="form-control" id="edit_type_display" disabled>
+                                    <div class="form-text text-muted">类型不可修改</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">标题 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-control" id="edit_abstract" rows="2"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">SQL内容 <span class="text-danger">*</span></label>
+                            <textarea class="form-control code-editor" id="edit_sql_content" rows="10" required
+                                placeholder="SELECT house_id, count(distinct device_id) as number&#10;FROM uhomes_stat.stat_demand_log_events&#10;where ts_time between 'start_at_replace' and 'end_at_replace'&#10;and house_id in (house_id_replace)&#10;group by house_id"></textarea>
+                            <div class="form-text text-danger fw-bold">
+                                ⚠️ 重要：使用 <code>xxx_replace</code> 格式作为变量占位符（如：start_at_replace, house_id_replace）
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">SQL变量说明</label>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-primary"
+                                        onclick="extractEditVariablesFromSQL()">
+                                        🔍 提取变量
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="addEditVariable()">
+                                        + 添加变量
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-2 py-2">
+                                <small>从 SQL 内容中提取 <code>xxx_replace</code> 格式的变量，为每个变量添加说明</small>
+                            </div>
+                            <div id="editVariablesList" class="mb-2">
+                                <div class="text-muted small">暂无变量，点击"提取变量"或"添加变量"</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">数据源</label>
+                                    <input type="text" class="form-control" id="edit_db_source" placeholder="default">
+                                    <div class="form-text">留空使用默认数据源</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">状态</label>
+                                    <input type="text" class="form-control" value="待生效" disabled>
+                                    <div class="form-text text-muted">只有"待生效"状态的订阅可以编辑</div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="updateSubscription()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 创建订阅模态框 -->
     <div class="modal fade" id="createModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
@@ -455,6 +559,7 @@
 
         // 变量管理
         let variables = [];
+        let editVariables = [];
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function () {
@@ -633,6 +738,14 @@
                             </svg>
                             <span class="d-none d-lg-inline ms-1">状态</span>
                         </button>
+                        ${sub.status === 'A' ? `
+                        <button class="btn btn-sm btn-outline-info" onclick='showEditModal(${JSON.stringify(sub).replace(/'/g, "&#39;")})' title="编辑">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                            </svg>
+                            <span class="d-none d-lg-inline ms-1">编辑</span>
+                        </button>
+                        ` : ''}
                     </td>
                 </tr>
             `).join('');
@@ -902,6 +1015,206 @@
             } catch (error) {
                 console.error('Execute subscription error:', error);
                 showError('执行失败: ' + error.message);
+            }
+        }
+
+        // 显示编辑模态框
+        function showEditModal(sub) {
+            // 填充基本信息
+            document.getElementById('edit_sub_key').value = sub.sub_key;
+            document.getElementById('edit_version').value = sub.version;
+            document.getElementById('edit_type').value = sub.type;
+            document.getElementById('edit_sub_key_display').value = sub.sub_key;
+            document.getElementById('edit_version_display').value = 'v' + sub.version;
+            document.getElementById('edit_type_display').value = getTypeText(sub.type);
+            document.getElementById('edit_title').value = sub.title || '';
+            document.getElementById('edit_abstract').value = sub.abstract || '';
+            document.getElementById('edit_sql_content').value = sub.extra_config?.sql_content || '';
+            document.getElementById('edit_db_source').value = sub.extra_config?.db_source || 'default';
+
+            // 加载现有变量
+            const sqlReplace = sub.extra_config?.sql_replace || {};
+            editVariables = Object.entries(sqlReplace).map(([name, description]) => ({
+                name,
+                description
+            }));
+            renderEditVariables();
+
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        // 从编辑表单的 SQL 中提取变量
+        function extractEditVariablesFromSQL() {
+            const sqlContent = document.getElementById('edit_sql_content').value;
+
+            if (!sqlContent.trim()) {
+                showError('请先输入 SQL 内容');
+                return;
+            }
+
+            const regex = /(\w+_replace)/g;
+            const matches = sqlContent.match(regex);
+
+            if (matches) {
+                const uniqueVars = [...new Set(matches)];
+                let newCount = 0;
+
+                uniqueVars.forEach(varName => {
+                    if (!editVariables.find(v => v.name === varName)) {
+                        editVariables.push({ name: varName, description: '' });
+                        newCount++;
+                    }
+                });
+
+                renderEditVariables();
+            } else {
+                showError('未找到 xxx_replace 格式的变量');
+            }
+        }
+
+        // 添加编辑变量
+        function addEditVariable() {
+            const varName = prompt('请输入变量名（格式：xxx_replace）：');
+            if (varName) {
+                if (!varName.endsWith('_replace')) {
+                    showError('变量名必须以 _replace 结尾');
+                    return;
+                }
+                if (editVariables.find(v => v.name === varName)) {
+                    showError('变量已存在');
+                    return;
+                }
+                editVariables.push({ name: varName, description: '' });
+                renderEditVariables();
+            }
+        }
+
+        // 删除编辑变量
+        function removeEditVariable(index) {
+            editVariables.splice(index, 1);
+            renderEditVariables();
+        }
+
+        // 渲染编辑变量列表
+        function renderEditVariables() {
+            const container = document.getElementById('editVariablesList');
+            if (editVariables.length === 0) {
+                container.innerHTML = '<div class="text-muted small">暂无变量，点击"提取变量"或"添加变量"</div>';
+                return;
+            }
+
+            container.innerHTML = editVariables.map((v, index) => `
+                <div class="input-group mb-2">
+                    <span class="input-group-text bg-light" style="min-width: 150px;">
+                        <code class="text-primary">${v.name}</code>
+                    </span>
+                    <input type="text" 
+                           class="form-control ${!v.description || !v.description.trim() ? 'border-danger' : ''}" 
+                           placeholder="变量说明（必填，如：开始时间）" 
+                           value="${v.description || ''}" 
+                           required
+                           onchange="editVariables[${index}].description = this.value; renderEditVariables()">
+                    <button class="btn btn-outline-danger" type="button" onclick="removeEditVariable(${index})" title="删除变量">
+                        ✕
+                    </button>
+                </div>
+            `).join('');
+
+            const emptyVars = editVariables.filter(v => !v.description || !v.description.trim());
+            if (emptyVars.length > 0) {
+                container.innerHTML += `
+                    <div class="alert alert-warning mt-2 py-2" role="alert">
+                        <small>⚠️ 还有 ${emptyVars.length} 个变量未填写说明</small>
+                    </div>
+                `;
+            }
+        }
+
+        // 更新订阅
+        async function updateSubscription() {
+            const subKey = document.getElementById('edit_sub_key').value;
+            const version = document.getElementById('edit_version').value;
+            const type = document.getElementById('edit_type').value;
+            const title = document.getElementById('edit_title').value.trim();
+            const abstract = document.getElementById('edit_abstract').value.trim();
+            const sqlContent = document.getElementById('edit_sql_content').value.trim();
+            const dbSource = document.getElementById('edit_db_source').value.trim() || 'default';
+
+            if (!title) {
+                showError('请输入标题');
+                return;
+            }
+
+            if (!sqlContent) {
+                showError('请输入 SQL 内容');
+                return;
+            }
+
+            // 验证变量
+            const regex = /(\w+_replace)/g;
+            const sqlMatches = sqlContent.match(regex);
+            const sqlVariables = sqlMatches ? [...new Set(sqlMatches)] : [];
+
+            const sqlReplace = {};
+            const variablesWithDesc = [];
+
+            editVariables.forEach(v => {
+                if (v.name && v.description && v.description.trim()) {
+                    sqlReplace[v.name] = v.description.trim();
+                    variablesWithDesc.push(v.name);
+                }
+            });
+
+            if (sqlVariables.length > 0) {
+                const missingDesc = editVariables.filter(v => v.name && (!v.description || !v.description.trim()));
+                if (missingDesc.length > 0) {
+                    showError(`以下变量缺少说明：${missingDesc.map(v => v.name).join(', ')}`);
+                    return;
+                }
+
+                const missingVars = sqlVariables.filter(v => !variablesWithDesc.includes(v));
+                if (missingVars.length > 0) {
+                    showError(`SQL 中的以下变量未添加说明：${missingVars.join(', ')}\n请点击"提取变量"按钮`);
+                    return;
+                }
+
+                if (Object.keys(sqlReplace).length === 0) {
+                    showError('请为 SQL 中的变量添加说明');
+                    return;
+                }
+            }
+
+            const data = {
+                title: title,
+                abstract: abstract,
+                extra_config: {
+                    sql_content: sqlContent,
+                    sql_replace: sqlReplace,
+                    db_source: dbSource,
+                    example: JSON.stringify(sqlReplace)
+                }
+            };
+
+            try {
+                const url = `${API_BASE}/subscriptions/${subKey}/versions/${version}?type=${type}`;
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.code === 'OK') {
+                    showSuccess('订阅更新成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    editVariables = [];
+                    loadSubscriptions(currentPage);
+                } else {
+                    showError('更新失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Update subscription error:', error);
+                showError('更新失败: ' + error.message);
             }
         }
 
