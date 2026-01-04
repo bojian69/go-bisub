@@ -486,7 +486,20 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">SQL预览</label>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">SQL预览</label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySqlPreview()"
+                                title="复制SQL">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                    class="bi bi-clipboard" viewBox="0 0 16 16">
+                                    <path
+                                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                                    <path
+                                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                                </svg>
+                                复制
+                            </button>
+                        </div>
                         <pre class="bg-light p-3 rounded code-editor" id="sqlPreview"
                             style="max-height: 300px; overflow-y: auto;"></pre>
                     </div>
@@ -497,7 +510,33 @@
                     </div>
 
                     <div id="executeResult" class="mt-3" style="display:none;">
-                        <label class="form-label fw-bold">执行结果</label>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">执行结果</label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onclick="copyExecuteResult()"
+                                    title="复制结果">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                        class="bi bi-clipboard" viewBox="0 0 16 16">
+                                        <path
+                                            d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                                        <path
+                                            d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                                    </svg>
+                                    复制
+                                </button>
+                                <button type="button" class="btn btn-outline-success" onclick="exportToExcel()"
+                                    title="导出Excel" id="exportExcelBtn" style="display:none;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                        class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+                                        <path
+                                            d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z" />
+                                        <path
+                                            d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z" />
+                                    </svg>
+                                    导出Excel
+                                </button>
+                            </div>
+                        </div>
                         <pre class="bg-light p-3 rounded" id="executeResultContent"
                             style="max-height: 400px; overflow-y: auto;"></pre>
                     </div>
@@ -513,6 +552,62 @@
                         执行
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看详情模态框 -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">订阅详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="detailsContent">
+                        <!-- 详情内容将动态填充 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知容器 -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-check-circle me-2" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                        <path
+                            d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z" />
+                    </svg>
+                    <span id="successToastMessage">操作成功</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-exclamation-circle me-2" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                        <path
+                            d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+                    </svg>
+                    <span id="errorToastMessage">操作失败</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -548,6 +643,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="/static/js/common.js"></script>
     <script>
         const API_BASE = '/api';
@@ -897,7 +993,11 @@
             // 初始化SQL预览
             updateSqlPreview(sub);
 
+            // 重置执行结果和导出按钮状态
             document.getElementById('executeResult').style.display = 'none';
+            document.getElementById('exportExcelBtn').style.display = 'none';
+            window.lastExecuteResult = null;
+
             new bootstrap.Modal(document.getElementById('executeModal')).show();
         }
 
@@ -1003,18 +1103,33 @@
                 const result = await response.json();
                 const resultEl = document.getElementById('executeResult');
                 const contentEl = document.getElementById('executeResultContent');
+                const exportBtn = document.getElementById('exportExcelBtn');
 
                 resultEl.style.display = 'block';
                 if (result.code === 'OK') {
+                    // 存储执行结果数据供导出使用
+                    window.lastExecuteResult = result.data;
+
                     contentEl.textContent = JSON.stringify(result.data, null, 2);
                     contentEl.className = 'bg-light p-3 rounded';
+
+                    // 如果结果是数组格式，显示导出Excel按钮
+                    if (Array.isArray(result.data) && result.data.length > 0) {
+                        exportBtn.style.display = 'inline-block';
+                    } else {
+                        exportBtn.style.display = 'none';
+                    }
                 } else {
+                    window.lastExecuteResult = null;
                     contentEl.textContent = `错误: ${result.message}`;
                     contentEl.className = 'bg-danger text-white p-3 rounded';
+                    exportBtn.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Execute subscription error:', error);
                 showError('执行失败: ' + error.message);
+                window.lastExecuteResult = null;
+                document.getElementById('exportExcelBtn').style.display = 'none';
             }
         }
 
@@ -1220,7 +1335,47 @@
 
         // 查看详情
         function viewDetails(sub) {
-            alert(`订阅详情:\n\nKey: ${sub.sub_key}\n版本: ${sub.version}\n标题: ${sub.title}\n描述: ${sub.abstract || '无'}\n状态: ${getStatusText(sub.status)}`);
+            const detailsContent = document.getElementById('detailsContent');
+            detailsContent.innerHTML = `
+                <div class="row">
+                    <div class="col-sm-4"><strong>订阅Key:</strong></div>
+                    <div class="col-sm-8"><code>${sub.sub_key}</code></div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>版本:</strong></div>
+                    <div class="col-sm-8"><span class="badge bg-secondary">v${sub.version}</span></div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>标题:</strong></div>
+                    <div class="col-sm-8">${sub.title}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>类型:</strong></div>
+                    <div class="col-sm-8">${getTypeText(sub.type)}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>状态:</strong></div>
+                    <div class="col-sm-8"><span class="badge ${getStatusBadgeClass(sub.status)}">${getStatusText(sub.status)}</span></div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>描述:</strong></div>
+                    <div class="col-sm-8">${sub.abstract || '无'}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>创建人:</strong></div>
+                    <div class="col-sm-8">${sub.creator_id || '-'}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>创建时间:</strong></div>
+                    <div class="col-sm-8">${formatDateTime(sub.created_at)}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>数据源:</strong></div>
+                    <div class="col-sm-8">${sub.extra_config?.db_source || 'default'}</div>
+                </div>
+            `;
+
+            new bootstrap.Modal(document.getElementById('detailsModal')).show();
         }
 
         // 显示状态变更模态框
@@ -1476,11 +1631,209 @@
         }
 
         function showSuccess(message) {
-            alert('✅ ' + message);
+            const toast = document.getElementById('successToast');
+            const messageEl = document.getElementById('successToastMessage');
+            messageEl.textContent = message;
+
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000 // 5秒后自动消失
+            });
+            bsToast.show();
         }
 
         function showError(message) {
-            alert('❌ ' + message);
+            const toast = document.getElementById('errorToast');
+            const messageEl = document.getElementById('errorToastMessage');
+            messageEl.textContent = message;
+
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000 // 5秒后自动消失
+            });
+            bsToast.show();
+        }
+
+        // 复制SQL预览内容
+        function copySqlPreview() {
+            const sqlPreview = document.getElementById('sqlPreview');
+            const textContent = sqlPreview.textContent || sqlPreview.innerText;
+
+            if (!textContent || textContent.trim() === '无SQL内容') {
+                showError('没有可复制的SQL内容');
+                return;
+            }
+
+            // 获取复制按钮，添加视觉反馈
+            const copyBtn = event.target.closest('button');
+            const originalText = copyBtn.innerHTML;
+
+            navigator.clipboard.writeText(textContent).then(() => {
+                // 显示成功反馈
+                copyBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
+                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                    </svg>
+                    已复制
+                `;
+                copyBtn.classList.add('btn-success');
+                copyBtn.classList.remove('btn-outline-secondary');
+
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('btn-success');
+                    copyBtn.classList.add('btn-outline-secondary');
+                }, 2000);
+
+                showSuccess('SQL内容已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级方案：使用传统方法
+                const textArea = document.createElement('textarea');
+                textArea.value = textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    // 显示成功反馈
+                    copyBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
+                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                        </svg>
+                        已复制
+                    `;
+                    copyBtn.classList.add('btn-success');
+                    copyBtn.classList.remove('btn-outline-secondary');
+
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.classList.remove('btn-success');
+                        copyBtn.classList.add('btn-outline-secondary');
+                    }, 2000);
+
+                    showSuccess('SQL内容已复制到剪贴板');
+                } catch (e) {
+                    showError('复制失败，请手动选择复制');
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // 复制执行结果内容
+        function copyExecuteResult() {
+            const resultContent = document.getElementById('executeResultContent');
+            const textContent = resultContent.textContent || resultContent.innerText;
+
+            if (!textContent || textContent.trim() === '') {
+                showError('没有可复制的执行结果');
+                return;
+            }
+
+            // 获取复制按钮，添加视觉反馈
+            const copyBtn = event.target.closest('button');
+            const originalText = copyBtn.innerHTML;
+
+            navigator.clipboard.writeText(textContent).then(() => {
+                // 显示成功反馈
+                copyBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
+                        <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                    </svg>
+                    已复制
+                `;
+                copyBtn.classList.add('btn-success');
+                copyBtn.classList.remove('btn-outline-secondary');
+
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('btn-success');
+                    copyBtn.classList.add('btn-outline-secondary');
+                }, 2000);
+
+                showSuccess('执行结果已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级方案：使用传统方法
+                const textArea = document.createElement('textarea');
+                textArea.value = textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    // 显示成功反馈
+                    copyBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
+                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                        </svg>
+                        已复制
+                    `;
+                    copyBtn.classList.add('btn-success');
+                    copyBtn.classList.remove('btn-outline-secondary');
+
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.classList.remove('btn-success');
+                        copyBtn.classList.add('btn-outline-secondary');
+                    }, 2000);
+
+                    showSuccess('执行结果已复制到剪贴板');
+                } catch (e) {
+                    showError('复制失败，请手动选择复制');
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // 导出Excel
+        function exportToExcel() {
+            if (!window.lastExecuteResult || !Array.isArray(window.lastExecuteResult)) {
+                showError('没有可导出的数据或数据格式不支持');
+                return;
+            }
+
+            try {
+                const data = window.lastExecuteResult;
+
+                if (data.length === 0) {
+                    showError('数据为空，无法导出');
+                    return;
+                }
+
+                // 创建工作簿
+                const wb = XLSX.utils.book_new();
+
+                // 创建工作表
+                const ws = XLSX.utils.json_to_sheet(data);
+
+                // 设置列宽（可选）
+                const colWidths = [];
+                if (data.length > 0) {
+                    Object.keys(data[0]).forEach(key => {
+                        const maxLength = Math.max(
+                            key.length,
+                            ...data.map(row => String(row[key] || '').length)
+                        );
+                        colWidths.push({ wch: Math.min(maxLength + 2, 50) });
+                    });
+                    ws['!cols'] = colWidths;
+                }
+
+                // 添加工作表到工作簿
+                XLSX.utils.book_append_sheet(wb, ws, '查询结果');
+
+                // 生成文件名
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+                const filename = `${executeContext.sub_key}_v${executeContext.version}_${timestamp}.xlsx`;
+
+                // 导出文件
+                XLSX.writeFile(wb, filename);
+
+                showSuccess(`Excel文件已导出: ${filename}`);
+
+            } catch (error) {
+                console.error('导出Excel失败:', error);
+                showError('导出Excel失败: ' + error.message);
+            }
         }
     </script>
 </body>
