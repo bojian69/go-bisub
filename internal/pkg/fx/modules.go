@@ -309,10 +309,13 @@ func RegisterRoutes(
 
 	// Web UI
 	engine.LoadHTMLGlob("web/templates/*")
+	
+	// 静态资源不需要认证
+	engine.Static("/admin/static", "./web/static")
+	
 	webUI := engine.Group("/admin")
 	webUI.Use(authMiddleware.BasicAuth())
 	{
-		webUI.Static("/static", "./web/static")
 		webUI.GET("/", func(c *gin.Context) {
 			c.HTML(200, "index.html", gin.H{"title": "BI Subscription Management"})
 		})

@@ -367,3 +367,24 @@ check-env: ## 检查开发环境
 	@[ -f "$(shell go env GOPATH)/bin/golangci-lint" ] && echo "✓ golangci-lint installed" || echo "✗ golangci-lint not installed"
 	@[ -f "$(shell go env GOPATH)/bin/goimports" ] && echo "✓ goimports installed" || echo "✗ goimports not installed"
 	@echo "Environment check complete!"
+
+# 前端资源管理
+.PHONY: assets-update
+assets-update: ## 更新第三方前端资源
+	@echo "Updating vendor assets..."
+	@./scripts/update-vendor-assets.sh
+
+.PHONY: assets-check
+assets-check: ## 检查第三方资源完整性
+	@echo "Checking vendor assets integrity..."
+	@./scripts/check-vendor-integrity.sh
+
+.PHONY: assets-clean
+assets-clean: ## 清理第三方资源
+	@echo "Cleaning vendor assets..."
+	@rm -rf web/static/js/vendor web/static/css/vendor
+	@echo "Vendor assets cleaned!"
+
+.PHONY: assets-init
+assets-init: assets-clean assets-update ## 初始化前端资源
+	@echo "Frontend assets initialized successfully!"
